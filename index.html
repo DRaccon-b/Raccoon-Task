@@ -505,12 +505,17 @@ body {
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.4/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabase = null;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch(e) {
+  console.error('Supabase konnte nicht geladen werden:', e);
+}
 
 let currentRole = null;
 let currentGmTab = 'quests';
@@ -532,6 +537,7 @@ async function init() {
 }
 
 async function loadAllData() {
+  if (!supabase) { renderAll(); return; }
   const [statsRes, questsRes, shopRes, histRes] = await Promise.all([
     supabase.from('player_stats').select('*').eq('id', 1).single(),
     supabase.from('quests').select('*').order('created_at', { ascending: false }),
@@ -546,6 +552,7 @@ async function loadAllData() {
 }
 
 function subscribeRealtime() {
+  if (!supabase) return;
   channels.forEach(c => supabase.removeChannel(c));
   channels = [];
 
