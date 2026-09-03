@@ -1,4 +1,9 @@
 <title>Couples Quest</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Couples Quest">
+<meta name="theme-color" content="#FBF8F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141220" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <style>
 :root {
@@ -24,7 +29,6 @@
   --radius-sm: 10px;
   --radius-xs: 6px;
 }
-
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --ink: #F0ECF9;
@@ -59,9 +63,7 @@
   --mint-soft: #1A5C40;
   --rose-soft: #6B1D30;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
   background: var(--parchment);
@@ -75,40 +77,20 @@ body {
   overflow-x: hidden;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
-/* ─── Role Selection ─── */
 .role-select {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: 32px 24px;
-  text-align: center;
-  gap: 40px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100dvh; padding: 32px 24px; text-align: center; gap: 40px;
 }
-.role-select h1 {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.1;
-}
+.role-select h1 { font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.1; }
 .role-select h1 span { display: block; font-size: 15px; font-weight: 400; font-family: 'Nunito', sans-serif; color: var(--ink-muted); margin-top: 8px; }
-.role-raccoon {
-  width: 120px;
-  height: 120px;
-}
+.role-raccoon { width: 120px; height: 120px; }
 .role-buttons { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 280px; }
 .role-btn {
-  display: flex; align-items: center; gap: 14px;
-  padding: 18px 22px;
-  border-radius: var(--radius);
-  border: 2px solid var(--surface-border);
-  background: var(--surface);
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
+  display: flex; align-items: center; gap: 14px; padding: 18px 22px;
+  border-radius: var(--radius); border: 2px solid var(--surface-border);
+  background: var(--surface); cursor: pointer; transition: all 0.2s; text-align: left;
 }
 .role-btn:active { transform: scale(0.97); }
 .role-btn.player { border-color: var(--plum-soft); }
@@ -118,190 +100,84 @@ body {
 .role-btn .icon { font-size: 28px; flex-shrink: 0; }
 .role-btn .label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; color: var(--ink); }
 .role-btn .sublabel { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
-
-/* ─── Player Header ─── */
 .player-header {
   position: sticky; top: 0; z-index: 100;
-  background: var(--surface);
-  border-bottom: 1px solid var(--surface-border);
-  padding: 12px 20px;
-  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border-bottom: 1px solid var(--surface-border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 14px;
   box-shadow: var(--shadow-sm);
 }
 .level-badge {
-  width: 48px; height: 48px;
-  border-radius: 50%;
+  width: 48px; height: 48px; border-radius: 50%;
   background: linear-gradient(135deg, var(--honey), #E8960F);
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column;
-  box-shadow: 0 2px 8px rgba(245,166,35,0.3);
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  box-shadow: 0 2px 8px rgba(245,166,35,0.3); flex-shrink: 0;
 }
 .level-badge .lv { font-family: 'Fredoka', sans-serif; font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.85); line-height: 1; letter-spacing: 0.5px; text-transform: uppercase; }
 .level-badge .num { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; color: #fff; line-height: 1; margin-top: -1px; }
 .stats-col { flex: 1; min-width: 0; }
 .exp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.exp-bar-wrap {
-  flex: 1; height: 8px;
-  background: var(--surface-raised);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.exp-bar {
-  height: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--honey), #FFD666);
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
+.exp-bar-wrap { flex: 1; height: 8px; background: var(--surface-raised); border-radius: 4px; overflow: hidden; }
+.exp-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--honey), #FFD666); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
 .exp-text { font-size: 11px; color: var(--ink-muted); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.token-display {
-  display: flex; align-items: center; gap: 6px;
-}
+.token-display { display: flex; align-items: center; gap: 6px; }
 .token-icon {
-  width: 20px; height: 20px;
-  background: linear-gradient(135deg, var(--plum), #7C3AED);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: #fff;
-  box-shadow: 0 1px 4px rgba(139,92,246,0.3);
+  width: 20px; height: 20px; background: linear-gradient(135deg, var(--plum), #7C3AED);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #fff; box-shadow: 0 1px 4px rgba(139,92,246,0.3);
 }
 .token-count { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: var(--plum); font-variant-numeric: tabular-nums; }
 .token-label { font-size: 11px; color: var(--ink-muted); }
 .header-settings {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--surface-raised); border: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--ink-muted); font-size: 18px;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 50%; background: var(--surface-raised);
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--ink-muted); font-size: 18px; flex-shrink: 0;
 }
 .header-settings:active { transform: scale(0.9); }
-
-/* ─── Raccoon Stage ─── */
 .raccoon-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  min-height: 280px;
-  position: relative;
-  overflow: hidden;
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 20px; min-height: 280px; position: relative; overflow: hidden;
 }
-.raccoon-container {
-  position: relative;
-  width: 200px;
-  height: 200px;
-}
-.raccoon-svg {
-  width: 100%;
-  height: 100%;
-  animation: raccoon-idle 3s ease-in-out infinite;
-}
-@keyframes raccoon-idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.raccoon-shadow {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 16px;
-  background: radial-gradient(ellipse, rgba(30,27,46,0.12) 0%, transparent 70%);
-  animation: shadow-pulse 3s ease-in-out infinite;
-}
-@keyframes shadow-pulse {
-  0%, 100% { transform: translateX(-50%) scaleX(1); }
-  50% { transform: translateX(-50%) scaleX(0.85); }
-}
-.raccoon-mood {
-  position: absolute;
-  top: 10px;
-  right: -10px;
-  font-size: 28px;
-  animation: mood-float 2s ease-in-out infinite;
-}
-@keyframes mood-float {
-  0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 1; }
-  50% { transform: translateY(-12px) rotate(5deg); opacity: 0.8; }
-}
-.sparkles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.sparkle {
-  position: absolute;
-  width: 6px; height: 6px;
-  background: var(--honey);
-  border-radius: 50%;
-  opacity: 0;
-}
-
-/* ─── Bottom Nav ─── */
+.raccoon-container { position: relative; width: 200px; height: 200px; }
+.raccoon-svg { width: 100%; height: 100%; animation: raccoon-idle 3s ease-in-out infinite; }
+@keyframes raccoon-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.raccoon-mood { position: absolute; top: 10px; right: -10px; font-size: 28px; animation: mood-float 2s ease-in-out infinite; }
+@keyframes mood-float { 0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 1; } 50% { transform: translateY(-12px) rotate(5deg); opacity: 0.8; } }
 .bottom-nav {
-  position: sticky; bottom: 0;
-  background: var(--surface);
-  border-top: 1px solid var(--surface-border);
-  display: flex;
-  padding: 8px 16px calc(env(safe-area-inset-bottom, 8px) + 8px);
-  gap: 4px;
+  position: sticky; bottom: 0; background: var(--surface);
+  border-top: 1px solid var(--surface-border); display: flex;
+  padding: 8px 16px calc(env(safe-area-inset-bottom, 8px) + 8px); gap: 4px;
   box-shadow: 0 -2px 12px rgba(30,27,46,0.06);
 }
 .nav-btn {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 10px 4px 6px;
-  border: none; background: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s;
-  color: var(--ink-muted);
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px 6px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-sm); transition: all 0.2s; color: var(--ink-muted);
 }
 .nav-btn.active { color: var(--plum); background: var(--plum-soft); }
 .nav-btn:active { transform: scale(0.92); }
 .nav-btn .nav-icon { font-size: 22px; line-height: 1; }
 .nav-btn .nav-label { font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
-
-/* ─── Views ─── */
 .view { display: none; flex-direction: column; flex: 1; overflow-y: auto; }
 .view.active { display: flex; }
-
-/* ─── Quest List ─── */
-.quest-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
-.section-title {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 20px; font-weight: 600;
-  padding: 8px 0 4px;
-}
+.quest-list, .shop-grid, .rewards-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.section-title { font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 600; padding: 8px 0 4px; }
 .quest-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--surface-border);
-  display: flex; flex-direction: column; gap: 10px;
-  transition: all 0.2s;
+  background: var(--surface); border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--surface-border);
+  display: flex; flex-direction: column; gap: 10px; transition: all 0.2s;
 }
 .quest-card:active { transform: scale(0.98); }
 .quest-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .quest-name { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; flex: 1; }
 .quest-status {
   font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
-  flex-shrink: 0;
+  padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
 }
 .quest-status.active { background: var(--honey-glow); color: #92620A; }
 .quest-status.pending { background: var(--plum-soft); color: var(--plum); }
 .quest-status.done { background: var(--mint-soft); color: #065F46; }
-.quest-rewards {
-  display: flex; gap: 12px; align-items: center;
-}
-.reward-chip {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 13px; font-weight: 600;
-  color: var(--ink-secondary);
-}
+.quest-rewards { display: flex; gap: 12px; align-items: center; }
+.reward-chip { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-secondary); }
 .reward-chip .r-icon { font-size: 15px; }
 .quest-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
 .quest-actions { display: flex; gap: 8px; margin-top: 4px; }
@@ -313,119 +189,69 @@ body {
 .quest-btn:active { transform: scale(0.95); }
 .quest-btn.primary { background: var(--mint); color: #fff; }
 .quest-btn.secondary { background: var(--surface-raised); color: var(--ink-secondary); }
-
-/* ─── Shop ─── */
-.shop-grid { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
 .shop-item {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--surface-border);
+  background: var(--surface); border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--surface-border);
   display: flex; align-items: center; gap: 14px;
 }
 .shop-item-icon {
-  width: 48px; height: 48px;
-  border-radius: var(--radius-sm);
-  background: var(--plum-soft);
-  display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: var(--radius-sm);
+  background: var(--plum-soft); display: flex; align-items: center; justify-content: center;
   font-size: 24px; flex-shrink: 0;
 }
 .shop-item-info { flex: 1; min-width: 0; }
 .shop-item-name { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; }
 .shop-item-desc { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
 .shop-buy-btn {
-  display: flex; align-items: center; gap: 5px;
-  padding: 8px 14px; border: none; border-radius: 20px;
-  background: linear-gradient(135deg, var(--plum), #7C3AED);
-  color: #fff; font-family: 'Fredoka', sans-serif; font-weight: 600;
-  font-size: 13px; cursor: pointer; white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(139,92,246,0.3);
-  transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px; padding: 8px 14px; border: none; border-radius: 20px;
+  background: linear-gradient(135deg, var(--plum), #7C3AED); color: #fff;
+  font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer; white-space: nowrap; box-shadow: 0 2px 8px rgba(139,92,246,0.3); transition: all 0.15s;
 }
 .shop-buy-btn:active { transform: scale(0.92); }
 .shop-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ─── Rewards / History ─── */
-.rewards-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
 .reward-entry {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--surface-border);
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--surface-border);
 }
 .reward-entry .re-icon { font-size: 24px; flex-shrink: 0; }
 .reward-entry .re-info { flex: 1; }
 .reward-entry .re-title { font-weight: 600; font-size: 14px; }
 .reward-entry .re-time { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
-.reward-entry .re-value { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--mint); }
-
-/* ─── Empty State ─── */
+.reward-entry .re-value { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--mint); white-space: nowrap; }
 .empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 48px 24px; text-align: center; gap: 12px; color: var(--ink-muted);
 }
 .empty-state .empty-icon { font-size: 48px; opacity: 0.6; }
 .empty-state .empty-text { font-size: 14px; max-width: 240px; line-height: 1.5; }
-
-/* ═══ GAME MASTER VIEW ═══ */
 .gm-app { display: flex; flex-direction: column; min-height: 100dvh; }
-
 .gm-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--surface-border);
-  padding: 16px 20px;
-  box-shadow: var(--shadow-sm);
+  background: var(--surface); border-bottom: 1px solid var(--surface-border);
+  padding: 16px 20px; box-shadow: var(--shadow-sm);
 }
 .gm-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .gm-title { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; }
 .gm-title .rose { color: var(--rose); }
-.gm-stats-row {
-  display: flex; gap: 12px;
-}
-.gm-stat {
-  flex: 1;
-  background: var(--surface-raised);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  text-align: center;
-}
+.gm-stats-row { display: flex; gap: 12px; }
+.gm-stat { flex: 1; background: var(--surface-raised); border-radius: var(--radius-sm); padding: 10px 12px; text-align: center; }
 .gm-stat .val { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
 .gm-stat .val.gold { color: var(--honey); }
 .gm-stat .val.purple { color: var(--plum); }
 .gm-stat .val.green { color: var(--mint); }
 .gm-stat .lbl { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-top: 2px; }
-
-.gm-content {
-  flex: 1; overflow-y: auto;
-  padding: 16px 20px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-
-.gm-tabs {
-  display: flex; gap: 4px;
-  background: var(--surface-raised);
-  border-radius: var(--radius-sm);
-  padding: 4px;
-}
+.gm-content { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.gm-tabs { display: flex; gap: 4px; background: var(--surface-raised); border-radius: var(--radius-sm); padding: 4px; }
 .gm-tab {
-  flex: 1; padding: 10px; border: none;
-  border-radius: var(--radius-xs);
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 600; font-size: 14px;
-  cursor: pointer; transition: all 0.2s;
-  background: none; color: var(--ink-muted);
+  flex: 1; padding: 10px; border: none; border-radius: var(--radius-xs);
+  font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px;
+  cursor: pointer; transition: all 0.2s; background: none; color: var(--ink-muted);
 }
 .gm-tab.active { background: var(--surface); color: var(--rose); box-shadow: var(--shadow-sm); }
 .gm-tab:active { transform: scale(0.95); }
-
 .gm-quest-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  border: 1px solid var(--surface-border);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface); border-radius: var(--radius); padding: 14px 16px;
+  border: 1px solid var(--surface-border); box-shadow: var(--shadow-sm);
 }
 .gm-quest-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .gm-quest-name { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; flex: 1; }
@@ -440,138 +266,84 @@ body {
 .gm-action-btn.confirm { background: var(--mint); color: #fff; }
 .gm-action-btn.deny { background: var(--surface-raised); color: var(--ink-muted); }
 .gm-action-btn.delete { background: var(--rose-soft); color: var(--rose); }
-
-/* ─── FAB ─── */
 .fab {
   position: fixed; bottom: 28px; right: calc(50% - 195px);
-  width: 56px; height: 56px;
-  border-radius: 50%; border: none;
-  background: linear-gradient(135deg, var(--rose), #E11D48);
-  color: #fff; font-size: 28px;
-  box-shadow: 0 4px 16px rgba(244,63,94,0.35);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-  z-index: 200;
+  width: 56px; height: 56px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, var(--rose), #E11D48); color: #fff; font-size: 28px;
+  box-shadow: 0 4px 16px rgba(244,63,94,0.35); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 200;
 }
 @media (max-width: 430px) { .fab { right: 24px; } }
 .fab:active { transform: scale(0.88); }
-
-/* ─── Modal ─── */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 500;
   background: rgba(20, 18, 32, 0.5);
   display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
 .modal-overlay.open { opacity: 1; pointer-events: auto; }
 .modal-sheet {
-  background: var(--surface);
-  border-radius: 24px 24px 0 0;
-  width: 100%; max-width: 430px;
-  max-height: 85dvh;
-  overflow-y: auto;
-  padding: 8px 24px 32px;
-  transform: translateY(100%);
+  background: var(--surface); border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 430px; max-height: 85dvh; overflow-y: auto;
+  padding: 8px 24px 32px; transform: translateY(100%);
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .modal-overlay.open .modal-sheet { transform: translateY(0); }
 .modal-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--surface-raised); margin: 8px auto 20px; }
 .modal-title { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 20px; }
-
 .form-group { margin-bottom: 18px; }
 .form-label { display: block; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 6px; }
 .form-input {
-  width: 100%; padding: 12px 14px;
-  border: 2px solid var(--surface-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  font-family: 'Nunito', sans-serif;
-  font-size: 15px; color: var(--ink);
-  outline: none;
-  transition: border-color 0.2s;
+  width: 100%; padding: 12px 14px; border: 2px solid var(--surface-border);
+  border-radius: var(--radius-sm); background: var(--surface-raised);
+  font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--ink); outline: none; transition: border-color 0.2s;
 }
 .form-input:focus { border-color: var(--rose); }
 .form-input::placeholder { color: var(--ink-muted); }
-
 .form-row { display: flex; gap: 12px; }
 .form-row .form-group { flex: 1; }
-
 .form-submit {
-  width: 100%; padding: 14px;
-  border: none; border-radius: var(--radius);
-  font-family: 'Fredoka', sans-serif; font-weight: 700;
-  font-size: 16px; cursor: pointer;
-  transition: all 0.15s;
-  color: #fff;
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+  font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 16px;
+  cursor: pointer; transition: all 0.15s; color: #fff;
 }
 .form-submit:active { transform: scale(0.97); }
 .form-submit.rose-bg { background: linear-gradient(135deg, var(--rose), #E11D48); box-shadow: 0 4px 12px rgba(244,63,94,0.3); }
 .form-submit.plum-bg { background: linear-gradient(135deg, var(--plum), #7C3AED); box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
-
-/* ─── Toast ─── */
 .toast {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-120%);
   padding: 12px 20px; border-radius: var(--radius-sm);
   font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px;
-  color: #fff; z-index: 1000;
-  box-shadow: var(--shadow-lg);
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  max-width: 90%;
-  text-align: center;
+  color: #fff; z-index: 1000; box-shadow: var(--shadow-lg);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); max-width: 90%; text-align: center;
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.success { background: var(--mint); }
 .toast.info { background: var(--plum); }
 .toast.error { background: var(--rose); }
-
-/* ─── Level Up Animation ─── */
 .level-up-overlay {
   position: fixed; inset: 0; z-index: 900;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(20, 18, 32, 0.7);
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
+  background: rgba(20, 18, 32, 0.7); opacity: 0; pointer-events: none; transition: opacity 0.3s;
 }
 .level-up-overlay.show { opacity: 1; pointer-events: auto; }
 .level-up-card {
-  text-align: center; padding: 40px 32px;
-  background: var(--surface);
-  border-radius: 24px;
-  box-shadow: var(--shadow-lg);
-  transform: scale(0.8);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  text-align: center; padding: 40px 32px; background: var(--surface);
+  border-radius: 24px; box-shadow: var(--shadow-lg);
+  transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .level-up-overlay.show .level-up-card { transform: scale(1); }
 .level-up-card .lu-stars { font-size: 40px; margin-bottom: 12px; }
 .level-up-card .lu-text { font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--honey), #E8960F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .level-up-card .lu-level { font-family: 'Fredoka', sans-serif; font-size: 64px; font-weight: 700; color: var(--honey); margin: 8px 0; }
 .level-up-card .lu-dismiss { margin-top: 16px; padding: 10px 28px; border: none; border-radius: 20px; background: var(--honey); color: #fff; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
-
-/* ─── Purchased Items ─── */
-.purchase-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
-.purchase-entry {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--surface-border);
-}
-.purchase-entry .pe-icon { font-size: 24px; flex-shrink: 0; }
-.purchase-entry .pe-info { flex: 1; }
-.purchase-entry .pe-name { font-weight: 600; font-size: 14px; }
-.purchase-entry .pe-time { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
-.purchase-entry .pe-cost { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px; color: var(--plum); }
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 </style>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Level Up Overlay -->
 <div class="level-up-overlay" id="levelUpOverlay">
   <div class="level-up-card">
     <div class="lu-stars">&#10024;&#127775;&#10024;</div>
@@ -581,34 +353,21 @@ body {
   </div>
 </div>
 
-<!-- ═══ ROLE SELECT ═══ -->
+<!-- ROLE SELECT -->
 <div id="roleSelect" class="role-select">
   <svg class="role-raccoon" viewBox="0 0 120 120" fill="none">
     <ellipse cx="60" cy="108" rx="35" ry="6" fill="var(--surface-raised)"/>
-    <!-- body -->
     <ellipse cx="60" cy="72" rx="32" ry="28" fill="#6B7280"/>
     <ellipse cx="60" cy="75" rx="24" ry="20" fill="#9CA3AF"/>
-    <!-- head -->
     <circle cx="60" cy="42" r="24" fill="#6B7280"/>
-    <!-- ears -->
-    <circle cx="38" cy="22" r="10" fill="#6B7280"/>
-    <circle cx="38" cy="22" r="6" fill="#F9A8D4"/>
-    <circle cx="82" cy="22" r="10" fill="#6B7280"/>
-    <circle cx="82" cy="22" r="6" fill="#F9A8D4"/>
-    <!-- mask -->
+    <circle cx="38" cy="22" r="10" fill="#6B7280"/><circle cx="38" cy="22" r="6" fill="#F9A8D4"/>
+    <circle cx="82" cy="22" r="10" fill="#6B7280"/><circle cx="82" cy="22" r="6" fill="#F9A8D4"/>
     <ellipse cx="60" cy="40" rx="20" ry="12" fill="#374151"/>
-    <!-- eyes -->
-    <ellipse cx="50" cy="39" rx="5" ry="6" fill="white"/>
-    <ellipse cx="70" cy="39" rx="5" ry="6" fill="white"/>
-    <circle cx="52" cy="38" r="2.5" fill="#1E1B2E"/>
-    <circle cx="72" cy="38" r="2.5" fill="#1E1B2E"/>
-    <circle cx="53" cy="37" r="1" fill="white"/>
-    <circle cx="73" cy="37" r="1" fill="white"/>
-    <!-- nose -->
+    <ellipse cx="50" cy="39" rx="5" ry="6" fill="white"/><ellipse cx="70" cy="39" rx="5" ry="6" fill="white"/>
+    <circle cx="52" cy="38" r="2.5" fill="#1E1B2E"/><circle cx="72" cy="38" r="2.5" fill="#1E1B2E"/>
+    <circle cx="53" cy="37" r="1" fill="white"/><circle cx="73" cy="37" r="1" fill="white"/>
     <ellipse cx="60" cy="48" rx="3" ry="2" fill="#1E1B2E"/>
-    <!-- mouth -->
     <path d="M56 51 Q60 55 64 51" stroke="#1E1B2E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <!-- tail -->
     <path d="M88 68 Q105 50 95 35" stroke="#6B7280" stroke-width="8" fill="none" stroke-linecap="round"/>
     <path d="M88 68 Q105 50 95 35" stroke="#374151" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="8 8"/>
   </svg>
@@ -616,28 +375,19 @@ body {
   <div class="role-buttons">
     <button class="role-btn player" onclick="selectRole('player')">
       <div class="icon">&#127918;</div>
-      <div>
-        <div class="label">Spieler</div>
-        <div class="sublabel">Quests erledigen &amp; leveln</div>
-      </div>
+      <div><div class="label">Spieler</div><div class="sublabel">Quests erledigen &amp; leveln</div></div>
     </button>
     <button class="role-btn gm" onclick="selectRole('gm')">
       <div class="icon">&#128081;</div>
-      <div>
-        <div class="label">Game Master</div>
-        <div class="sublabel">Quests erstellen &amp; verwalten</div>
-      </div>
+      <div><div class="label">Game Master</div><div class="sublabel">Quests erstellen &amp; verwalten</div></div>
     </button>
   </div>
 </div>
 
-<!-- ═══ PLAYER APP ═══ -->
+<!-- PLAYER APP -->
 <div id="playerApp" hidden>
   <div class="player-header">
-    <div class="level-badge">
-      <span class="lv">Lv</span>
-      <span class="num" id="pLevel">1</span>
-    </div>
+    <div class="level-badge"><span class="lv">Lv</span><span class="num" id="pLevel">1</span></div>
     <div class="stats-col">
       <div class="exp-row">
         <div class="exp-bar-wrap"><div class="exp-bar" id="pExpBar" style="width:0%"></div></div>
@@ -651,45 +401,31 @@ body {
     </div>
     <button class="header-settings" onclick="switchRole()" title="Rolle wechseln">&#8634;</button>
   </div>
-
   <div id="playerRaccoon" class="view active">
     <div class="raccoon-stage">
       <div class="raccoon-container">
-        <svg class="raccoon-svg" viewBox="0 0 200 200" fill="none" id="raccoonMain">
-          <ellipse cx="100" cy="180" rx="50" ry="8" fill="var(--surface-raised)" class="raccoon-shadow-el"/>
-          <!-- body -->
+        <svg class="raccoon-svg" viewBox="0 0 200 200" fill="none">
+          <ellipse cx="100" cy="180" rx="50" ry="8" fill="var(--surface-raised)"/>
           <ellipse cx="100" cy="130" rx="44" ry="38" fill="#6B7280"/>
           <ellipse cx="100" cy="135" rx="34" ry="28" fill="#9CA3AF"/>
-          <!-- arms -->
           <ellipse cx="58" cy="125" rx="10" ry="18" fill="#6B7280" transform="rotate(-15 58 125)"/>
           <ellipse cx="142" cy="125" rx="10" ry="18" fill="#6B7280" transform="rotate(15 142 125)"/>
-          <!-- feet -->
           <ellipse cx="80" cy="165" rx="14" ry="8" fill="#4B5563"/>
           <ellipse cx="120" cy="165" rx="14" ry="8" fill="#4B5563"/>
-          <!-- head -->
           <circle cx="100" cy="72" r="36" fill="#6B7280"/>
-          <!-- ears -->
-          <circle cx="68" cy="40" r="14" fill="#6B7280"/>
-          <circle cx="68" cy="40" r="9" fill="#F9A8D4"/>
-          <circle cx="132" cy="40" r="14" fill="#6B7280"/>
-          <circle cx="132" cy="40" r="9" fill="#F9A8D4"/>
-          <!-- mask -->
+          <circle cx="68" cy="40" r="14" fill="#6B7280"/><circle cx="68" cy="40" r="9" fill="#F9A8D4"/>
+          <circle cx="132" cy="40" r="14" fill="#6B7280"/><circle cx="132" cy="40" r="9" fill="#F9A8D4"/>
           <ellipse cx="100" cy="68" rx="28" ry="16" fill="#374151"/>
-          <!-- eyes -->
-          <ellipse cx="86" cy="66" rx="7" ry="8" fill="white" class="raccoon-eye"/>
-          <ellipse cx="114" cy="66" rx="7" ry="8" fill="white" class="raccoon-eye"/>
-          <circle cx="88" cy="65" r="3.5" fill="#1E1B2E" class="raccoon-pupil-l"/>
-          <circle cx="116" cy="65" r="3.5" fill="#1E1B2E" class="raccoon-pupil-r"/>
+          <ellipse cx="86" cy="66" rx="7" ry="8" fill="white"/>
+          <ellipse cx="114" cy="66" rx="7" ry="8" fill="white"/>
+          <circle cx="88" cy="65" r="3.5" fill="#1E1B2E"/>
+          <circle cx="116" cy="65" r="3.5" fill="#1E1B2E"/>
           <circle cx="89.5" cy="63.5" r="1.5" fill="white"/>
           <circle cx="117.5" cy="63.5" r="1.5" fill="white"/>
-          <!-- nose -->
           <ellipse cx="100" cy="78" rx="4" ry="3" fill="#1E1B2E"/>
-          <!-- mouth -->
-          <path d="M94 83 Q100 88 106 83" stroke="#1E1B2E" stroke-width="2" fill="none" stroke-linecap="round" id="raccoonMouth"/>
-          <!-- blush -->
+          <path d="M94 83 Q100 88 106 83" stroke="#1E1B2E" stroke-width="2" fill="none" stroke-linecap="round"/>
           <ellipse cx="78" cy="76" rx="6" ry="3.5" fill="#F9A8D4" opacity="0.4"/>
           <ellipse cx="122" cy="76" rx="6" ry="3.5" fill="#F9A8D4" opacity="0.4"/>
-          <!-- tail -->
           <path d="M140 120 Q172 90 158 55" stroke="#6B7280" stroke-width="12" fill="none" stroke-linecap="round"/>
           <path d="M140 120 Q172 90 158 55" stroke="#374151" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="12 12"/>
         </svg>
@@ -697,40 +433,18 @@ body {
       </div>
     </div>
   </div>
-
-  <div id="playerQuests" class="view">
-    <div class="quest-list" id="questListPlayer"></div>
-  </div>
-
-  <div id="playerShop" class="view">
-    <div class="shop-grid" id="shopListPlayer"></div>
-  </div>
-
-  <div id="playerRewards" class="view">
-    <div class="rewards-list" id="rewardsListPlayer"></div>
-  </div>
-
+  <div id="playerQuests" class="view"><div class="quest-list" id="questListPlayer"></div></div>
+  <div id="playerShop" class="view"><div class="shop-grid" id="shopListPlayer"></div></div>
+  <div id="playerRewards" class="view"><div class="rewards-list" id="rewardsListPlayer"></div></div>
   <div class="bottom-nav">
-    <button class="nav-btn active" data-view="playerRaccoon" onclick="switchPlayerView(this)">
-      <span class="nav-icon">&#128054;</span>
-      <span class="nav-label">Raccoon</span>
-    </button>
-    <button class="nav-btn" data-view="playerQuests" onclick="switchPlayerView(this)">
-      <span class="nav-icon">&#9876;&#65039;</span>
-      <span class="nav-label">Quests</span>
-    </button>
-    <button class="nav-btn" data-view="playerShop" onclick="switchPlayerView(this)">
-      <span class="nav-icon">&#128717;&#65039;</span>
-      <span class="nav-label">Shop</span>
-    </button>
-    <button class="nav-btn" data-view="playerRewards" onclick="switchPlayerView(this)">
-      <span class="nav-icon">&#127942;</span>
-      <span class="nav-label">Rewards</span>
-    </button>
+    <button class="nav-btn active" data-view="playerRaccoon" onclick="switchPlayerView(this)"><span class="nav-icon">&#128054;</span><span class="nav-label">Raccoon</span></button>
+    <button class="nav-btn" data-view="playerQuests" onclick="switchPlayerView(this)"><span class="nav-icon">&#9876;&#65039;</span><span class="nav-label">Quests</span></button>
+    <button class="nav-btn" data-view="playerShop" onclick="switchPlayerView(this)"><span class="nav-icon">&#128717;&#65039;</span><span class="nav-label">Shop</span></button>
+    <button class="nav-btn" data-view="playerRewards" onclick="switchPlayerView(this)"><span class="nav-icon">&#127942;</span><span class="nav-label">Rewards</span></button>
   </div>
 </div>
 
-<!-- ═══ GAME MASTER APP ═══ -->
+<!-- GAME MASTER APP -->
 <div id="gmApp" hidden>
   <div class="gm-header">
     <div class="gm-title-row">
@@ -756,112 +470,108 @@ body {
   <button class="fab" id="gmFab" onclick="openCreateModal()">+</button>
 </div>
 
-<!-- ═══ CREATE QUEST MODAL ═══ -->
+<!-- CREATE QUEST MODAL -->
 <div class="modal-overlay" id="questModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="modalTitle">Neue Quest</div>
-    <div class="form-group">
-      <label class="form-label">Quest Name</label>
-      <input class="form-input" id="questName" placeholder="z.B. Kuche sauber machen" maxlength="80">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Beschreibung (optional)</label>
-      <input class="form-input" id="questDesc" placeholder="Details zur Quest..." maxlength="200">
-    </div>
+    <div class="modal-title">Neue Quest</div>
+    <div class="form-group"><label class="form-label">Quest Name</label><input class="form-input" id="questName" placeholder="z.B. Kueche sauber machen" maxlength="80"></div>
+    <div class="form-group"><label class="form-label">Beschreibung (optional)</label><input class="form-input" id="questDesc" placeholder="Details zur Quest..." maxlength="200"></div>
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">&#9889; EXP Belohnung</label>
-        <input class="form-input" id="questExp" type="number" min="0" max="9999" placeholder="25" value="25">
-      </div>
-      <div class="form-group">
-        <label class="form-label">&#9830; Token Belohnung</label>
-        <input class="form-input" id="questTokens" type="number" min="0" max="9999" placeholder="5" value="5">
-      </div>
+      <div class="form-group"><label class="form-label">&#9889; EXP Belohnung</label><input class="form-input" id="questExp" type="number" min="0" max="9999" placeholder="25" value="25"></div>
+      <div class="form-group"><label class="form-label">&#9830; Token Belohnung</label><input class="form-input" id="questTokens" type="number" min="0" max="9999" placeholder="5" value="5"></div>
     </div>
     <button class="form-submit rose-bg" onclick="createQuest()">Quest erstellen</button>
   </div>
 </div>
 
-<!-- ═══ CREATE SHOP ITEM MODAL ═══ -->
+<!-- CREATE SHOP ITEM MODAL -->
 <div class="modal-overlay" id="shopModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Neuer Shop-Artikel</div>
-    <div class="form-group">
-      <label class="form-label">Artikelname</label>
-      <input class="form-input" id="shopItemName" placeholder="z.B. Massage" maxlength="60">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Beschreibung (optional)</label>
-      <input class="form-input" id="shopItemDesc" placeholder="Was bekommt der Spieler?" maxlength="200">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Emoji Icon</label>
-      <input class="form-input" id="shopItemIcon" placeholder="&#128149;" maxlength="4" value="&#127873;">
-    </div>
-    <div class="form-group">
-      <label class="form-label">&#9830; Preis in Tokens</label>
-      <input class="form-input" id="shopItemPrice" type="number" min="1" max="9999" placeholder="10" value="10">
-    </div>
+    <div class="form-group"><label class="form-label">Artikelname</label><input class="form-input" id="shopItemName" placeholder="z.B. Massage" maxlength="60"></div>
+    <div class="form-group"><label class="form-label">Beschreibung (optional)</label><input class="form-input" id="shopItemDesc" placeholder="Was bekommt der Spieler?" maxlength="200"></div>
+    <div class="form-group"><label class="form-label">Emoji Icon</label><input class="form-input" id="shopItemIcon" placeholder="&#128149;" maxlength="4" value="&#127873;"></div>
+    <div class="form-group"><label class="form-label">&#9830; Preis in Tokens</label><input class="form-input" id="shopItemPrice" type="number" min="1" max="9999" placeholder="10" value="10"></div>
     <button class="form-submit plum-bg" onclick="createShopItem()">Artikel erstellen</button>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.4/umd/supabase.min.js"></script>
 <script>
-let db = null;
+const SUPABASE_URL = 'https://puidguhybdxsdqvwykzs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1aWRndWh5YmR4c2Rxdnd5a3pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NzE5MjYsImV4cCI6MjEwMzI0NzkyNn0.inDTwVd_0-ibAGmYdbFdwyvyLIaeo5d_RudpLfIeHsg';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let currentRole = null;
 let currentGmTab = 'quests';
 let playerData = { level: 1, exp: 0, tokens: 0 };
-let unsubs = [];
+let allQuests = [];
+let allShopItems = [];
+let allHistory = [];
+let channels = [];
 
 const EXP_PER_LEVEL = lvl => 50 + (lvl * 50);
 
-// ─── Init ───
 async function init() {
   try {
-    db = await window.claude.use('db');
-  } catch(e) { db = null; }
-
-  if (!db) {
-    showToast('Datenbank nicht verfugbar — Daten werden lokal gespeichert', 'error');
-    loadLocal();
-    return;
-  }
-
-  try {
     const role = localStorage.getItem('cq_role');
-    if (role) selectRole(role, true);
+    if (role) selectRole(role);
   } catch(e) {}
+  await loadAllData();
+  subscribeRealtime();
 }
 
-function loadLocal() {
-  try {
-    const role = localStorage.getItem('cq_role');
-    if (role) selectRole(role, true);
-  } catch(e) {}
+async function loadAllData() {
+  const [statsRes, questsRes, shopRes, histRes] = await Promise.all([
+    supabase.from('player_stats').select('*').eq('id', 1).single(),
+    supabase.from('quests').select('*').order('created_at', { ascending: false }),
+    supabase.from('shop_items').select('*').order('created_at', { ascending: false }),
+    supabase.from('history').select('*').order('timestamp', { ascending: false }).limit(50)
+  ]);
+  if (statsRes.data) playerData = statsRes.data;
+  if (questsRes.data) allQuests = questsRes.data;
+  if (shopRes.data) allShopItems = shopRes.data;
+  if (histRes.data) allHistory = histRes.data;
+  renderAll();
 }
 
-function selectRole(role, silent) {
+function subscribeRealtime() {
+  channels.forEach(c => supabase.removeChannel(c));
+  channels = [];
+
+  const ch = supabase.channel('game-updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'player_stats' }, payload => {
+      if (payload.new) { playerData = payload.new; renderPlayerStats(); }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, () => {
+      supabase.from('quests').select('*').order('created_at', { ascending: false }).then(r => {
+        if (r.data) { allQuests = r.data; renderQuests(); }
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_items' }, () => {
+      supabase.from('shop_items').select('*').order('created_at', { ascending: false }).then(r => {
+        if (r.data) { allShopItems = r.data; renderShop(); }
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => {
+      supabase.from('history').select('*').order('timestamp', { ascending: false }).limit(50).then(r => {
+        if (r.data) { allHistory = r.data; renderHistory(); }
+      });
+    })
+    .subscribe();
+  channels.push(ch);
+}
+
+function selectRole(role) {
   currentRole = role;
   try { localStorage.setItem('cq_role', role); } catch(e) {}
-
   document.getElementById('roleSelect').hidden = true;
   document.getElementById('playerApp').hidden = role !== 'player';
   document.getElementById('gmApp').hidden = role !== 'gm';
-
-  unsubs.forEach(u => u());
-  unsubs = [];
-
-  if (db) {
-    subscribeToPlayerData();
-    subscribeToQuests();
-    subscribeToShopItems();
-    subscribeToHistory();
-  } else {
-    renderFromLocalData();
-  }
-
+  renderAll();
   if (role === 'player') updateRaccoonMood();
 }
 
@@ -871,267 +581,183 @@ function switchRole() {
   document.getElementById('roleSelect').hidden = false;
 }
 
-// ─── DB Subscriptions ───
-function subscribeToPlayerData() {
-  const u = db.doc('player/stats').onSnapshot(snap => {
-    if (snap.exists) {
-      playerData = { level: 1, exp: 0, tokens: 0, ...snap.data() };
-    }
-    renderPlayerStats();
-  });
-  unsubs.push(u);
+function renderAll() {
+  renderPlayerStats();
+  renderQuests();
+  renderShop();
+  renderHistory();
 }
 
-function subscribeToQuests() {
-  const u = db.collection('quests').orderBy('createdAt', 'desc').onSnapshot(snap => {
-    renderQuests(snap.docs);
-  });
-  unsubs.push(u);
-}
-
-function subscribeToShopItems() {
-  const u = db.collection('shop').orderBy('createdAt', 'desc').onSnapshot(snap => {
-    renderShop(snap.docs);
-  });
-  unsubs.push(u);
-}
-
-function subscribeToHistory() {
-  const u = db.collection('history').orderBy('timestamp', 'desc').limit(50).onSnapshot(snap => {
-    renderHistory(snap.docs);
-  });
-  unsubs.push(u);
-}
-
-// ─── Player Stats Rendering ───
 function renderPlayerStats() {
   const needed = EXP_PER_LEVEL(playerData.level);
   const pct = Math.min(100, (playerData.exp / needed) * 100);
-
   document.getElementById('pLevel').textContent = playerData.level;
   document.getElementById('pExpBar').style.width = pct + '%';
   document.getElementById('pExpText').textContent = playerData.exp + ' / ' + needed;
   document.getElementById('pTokens').textContent = playerData.tokens;
-
   document.getElementById('gmLevel').textContent = playerData.level;
   document.getElementById('gmTokens').textContent = playerData.tokens;
-
   updateRaccoonMood();
 }
 
 function updateRaccoonMood() {
-  const moods = ['&#128164;', '&#128522;', '&#128513;', '&#129321;', '&#128526;'];
-  const moodEl = document.getElementById('raccoonMood');
-  const idx = Math.min(moods.length - 1, Math.floor(playerData.level / 3));
-  moodEl.innerHTML = moods[idx];
+  const moods = ['\u{1F4A4}', '\u{1F60A}', '\u{1F601}', '\u{1F929}', '\u{1F60E}'];
+  const el = document.getElementById('raccoonMood');
+  if (el) el.textContent = moods[Math.min(moods.length - 1, Math.floor(playerData.level / 3))];
 }
 
-// ─── Quests ───
-function renderQuests(docs) {
-  const activeQuests = docs.filter(d => d.data().status !== 'done');
-  const pendingQuests = docs.filter(d => d.data().status === 'pending_confirm');
+function renderQuests() {
+  const activeDocs = allQuests.filter(q => q.status === 'active');
+  const pendingDocs = allQuests.filter(q => q.status === 'pending_confirm');
+  const doneDocs = allQuests.filter(q => q.status === 'done');
 
-  document.getElementById('gmQuests').textContent = activeQuests.length;
+  document.getElementById('gmQuests').textContent = activeDocs.length;
 
   // Player view
-  const playerEl = document.getElementById('questListPlayer');
-  if (docs.length === 0) {
-    playerEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Noch keine Quests. Dein Game Master muss dir erst welche erstellen!</div></div>';
-    return;
+  const pEl = document.getElementById('questListPlayer');
+  if (allQuests.length === 0) {
+    pEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Noch keine Quests. Dein Game Master muss dir erst welche erstellen!</div></div>';
+  } else {
+    let html = '';
+    if (activeDocs.length) {
+      html += '<div class="section-title">Aktive Quests</div>';
+      activeDocs.forEach(q => { html += questCardPlayer(q, 'active'); });
+    }
+    if (pendingDocs.length) {
+      html += '<div class="section-title">Warten auf Bestätigung</div>';
+      pendingDocs.forEach(q => { html += questCardPlayer(q, 'pending'); });
+    }
+    if (doneDocs.length) {
+      html += '<div class="section-title">Erledigt</div>';
+      doneDocs.slice(0, 10).forEach(q => { html += questCardPlayer(q, 'done'); });
+    }
+    pEl.innerHTML = html;
   }
-
-  const activeDocs = docs.filter(d => d.data().status === 'active');
-  const pendingDocs = docs.filter(d => d.data().status === 'pending_confirm');
-  const doneDocs = docs.filter(d => d.data().status === 'done');
-
-  let html = '';
-  if (activeDocs.length > 0) {
-    html += '<div class="section-title">Aktive Quests</div>';
-    activeDocs.forEach(d => { html += questCardPlayer(d, 'active'); });
-  }
-  if (pendingDocs.length > 0) {
-    html += '<div class="section-title">Warten auf Bestatigung</div>';
-    pendingDocs.forEach(d => { html += questCardPlayer(d, 'pending'); });
-  }
-  if (doneDocs.length > 0) {
-    html += '<div class="section-title">Erledigt</div>';
-    doneDocs.slice(0, 10).forEach(d => { html += questCardPlayer(d, 'done'); });
-  }
-  playerEl.innerHTML = html;
 
   // GM view
   const gmEl = document.getElementById('gmQuestsTab');
-  if (docs.length === 0) {
+  if (allQuests.length === 0) {
     gmEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Noch keine Quests erstellt. Tippe auf + um loszulegen!</div></div>';
-    return;
+  } else {
+    let gh = '';
+    if (pendingDocs.length) {
+      gh += '<div class="section-title" style="color:var(--rose)">&#128276; Bestätigung ausstehend</div>';
+      pendingDocs.forEach(q => {
+        gh += `<div class="gm-quest-card">
+          <div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status pending">Warten</div></div>
+          ${q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : ''}
+          <div class="gm-quest-rewards"><span>&#9889; ${q.exp_reward} EXP</span><span>&#9830; ${q.token_reward} Tokens</span></div>
+          <div class="gm-quest-actions">
+            <button class="gm-action-btn confirm" onclick="confirmQuest('${q.id}')">&#10004; Bestätigen</button>
+            <button class="gm-action-btn deny" onclick="denyQuest('${q.id}')">Zurückweisen</button>
+          </div>
+        </div>`;
+      });
+    }
+    if (activeDocs.length) {
+      gh += '<div class="section-title">Aktive Quests</div>';
+      activeDocs.forEach(q => {
+        gh += `<div class="gm-quest-card">
+          <div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status active">Aktiv</div></div>
+          ${q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : ''}
+          <div class="gm-quest-rewards"><span>&#9889; ${q.exp_reward} EXP</span><span>&#9830; ${q.token_reward} Tokens</span></div>
+          <div class="gm-quest-actions"><button class="gm-action-btn delete" onclick="deleteQuest('${q.id}')">Löschen</button></div>
+        </div>`;
+      });
+    }
+    if (doneDocs.length) {
+      gh += '<div class="section-title" style="opacity:0.6">Erledigt</div>';
+      doneDocs.slice(0, 5).forEach(q => {
+        gh += `<div class="gm-quest-card" style="opacity:0.5"><div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status done">Fertig</div></div></div>`;
+      });
+    }
+    gmEl.innerHTML = gh || '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Noch keine Quests erstellt. Tippe auf + um loszulegen!</div></div>';
   }
-
-  let gmHtml = '';
-  if (pendingDocs.length > 0) {
-    gmHtml += '<div class="section-title" style="color:var(--rose)">&#128276; Bestatigung ausstehend</div>';
-    pendingDocs.forEach(d => {
-      const q = d.data();
-      gmHtml += `<div class="gm-quest-card">
-        <div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status pending">Warten</div></div>
-        ${q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : ''}
-        <div class="gm-quest-rewards"><span>&#9889; ${q.expReward} EXP</span><span>&#9830; ${q.tokenReward} Tokens</span></div>
-        <div class="gm-quest-actions">
-          <button class="gm-action-btn confirm" onclick="confirmQuest('${d.id}')">&#10004; Bestatigen</button>
-          <button class="gm-action-btn deny" onclick="denyQuest('${d.id}')">Zuruckweisen</button>
-        </div>
-      </div>`;
-    });
-  }
-  if (activeDocs.length > 0) {
-    gmHtml += '<div class="section-title">Aktive Quests</div>';
-    activeDocs.forEach(d => {
-      const q = d.data();
-      gmHtml += `<div class="gm-quest-card">
-        <div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status active">Aktiv</div></div>
-        ${q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : ''}
-        <div class="gm-quest-rewards"><span>&#9889; ${q.expReward} EXP</span><span>&#9830; ${q.tokenReward} Tokens</span></div>
-        <div class="gm-quest-actions">
-          <button class="gm-action-btn delete" onclick="deleteQuest('${d.id}')">Loschen</button>
-        </div>
-      </div>`;
-    });
-  }
-  if (doneDocs.length > 0) {
-    gmHtml += '<div class="section-title" style="opacity:0.6">Erledigt</div>';
-    doneDocs.slice(0, 5).forEach(d => {
-      const q = d.data();
-      gmHtml += `<div class="gm-quest-card" style="opacity:0.5">
-        <div class="gm-quest-top"><div class="gm-quest-name">${esc(q.name)}</div><div class="quest-status done">Fertig</div></div>
-      </div>`;
-    });
-  }
-  if (!gmHtml) {
-    gmHtml = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Noch keine Quests. Tippe auf + um loszulegen!</div></div>';
-  }
-  gmEl.innerHTML = gmHtml;
 }
 
-function questCardPlayer(doc, status) {
-  const q = doc.data();
+function questCardPlayer(q, status) {
   let actions = '';
   if (status === 'active') {
-    actions = `<div class="quest-actions"><button class="quest-btn primary" onclick="submitQuest('${doc.id}')">&#10004; Erledigt!</button></div>`;
+    actions = `<div class="quest-actions"><button class="quest-btn primary" onclick="submitQuest('${q.id}')">&#10004; Erledigt!</button></div>`;
   }
   return `<div class="quest-card">
-    <div class="quest-card-header">
-      <div class="quest-name">${esc(q.name)}</div>
-      <div class="quest-status ${status}">${status === 'active' ? 'Aktiv' : status === 'pending' ? 'Warten' : 'Fertig'}</div>
-    </div>
+    <div class="quest-card-header"><div class="quest-name">${esc(q.name)}</div><div class="quest-status ${status}">${status === 'active' ? 'Aktiv' : status === 'pending' ? 'Warten' : 'Fertig'}</div></div>
     ${q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : ''}
     <div class="quest-rewards">
-      <div class="reward-chip"><span class="r-icon">&#9889;</span> ${q.expReward} EXP</div>
-      <div class="reward-chip"><span class="r-icon">&#9830;</span> ${q.tokenReward} Tokens</div>
+      <div class="reward-chip"><span class="r-icon">&#9889;</span> ${q.exp_reward} EXP</div>
+      <div class="reward-chip"><span class="r-icon">&#9830;</span> ${q.token_reward} Tokens</div>
     </div>
     ${actions}
   </div>`;
 }
 
-// ─── Shop ───
-function renderShop(docs) {
-  // Player
+function renderShop() {
   const pEl = document.getElementById('shopListPlayer');
-  if (docs.length === 0) {
-    pEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128717;&#65039;</div><div class="empty-text">Der Shop ist noch leer. Dein Game Master fullt ihn bald!</div></div>';
+  if (allShopItems.length === 0) {
+    pEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128717;&#65039;</div><div class="empty-text">Der Shop ist noch leer. Dein Game Master füllt ihn bald!</div></div>';
   } else {
     let html = '<div class="section-title">Wifey Shop</div>';
-    docs.forEach(d => {
-      const s = d.data();
+    allShopItems.forEach(s => {
       const canAfford = playerData.tokens >= s.price;
       html += `<div class="shop-item">
-        <div class="shop-item-icon">${s.icon || '&#127873;'}</div>
-        <div class="shop-item-info">
-          <div class="shop-item-name">${esc(s.name)}</div>
-          ${s.description ? '<div class="shop-item-desc">' + esc(s.description) + '</div>' : ''}
-        </div>
-        <button class="shop-buy-btn" onclick="buyItem('${d.id}')" ${canAfford ? '' : 'disabled'}>
-          &#9830; ${s.price}
-        </button>
+        <div class="shop-item-icon">${s.icon || '\u{1F381}'}</div>
+        <div class="shop-item-info"><div class="shop-item-name">${esc(s.name)}</div>${s.description ? '<div class="shop-item-desc">' + esc(s.description) + '</div>' : ''}</div>
+        <button class="shop-buy-btn" onclick="buyItem('${s.id}')" ${canAfford ? '' : 'disabled'}>&#9830; ${s.price}</button>
       </div>`;
     });
     pEl.innerHTML = html;
   }
-
-  // GM
   const gmEl = document.getElementById('gmShopTab');
-  if (docs.length === 0) {
-    gmEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128717;&#65039;</div><div class="empty-text">Noch keine Artikel. Tippe auf + um welche hinzuzufugen!</div></div>';
+  if (allShopItems.length === 0) {
+    gmEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128717;&#65039;</div><div class="empty-text">Noch keine Artikel. Tippe auf + um welche hinzuzufügen!</div></div>';
   } else {
     let html = '';
-    docs.forEach(d => {
-      const s = d.data();
+    allShopItems.forEach(s => {
       html += `<div class="gm-quest-card">
-        <div class="gm-quest-top">
-          <div style="font-size:24px;margin-right:8px">${s.icon || '&#127873;'}</div>
-          <div class="gm-quest-name">${esc(s.name)}</div>
-          <div style="font-family:'Fredoka';font-weight:600;color:var(--plum)">&#9830; ${s.price}</div>
-        </div>
+        <div class="gm-quest-top"><div style="font-size:24px;margin-right:8px">${s.icon || '\u{1F381}'}</div><div class="gm-quest-name">${esc(s.name)}</div><div style="font-family:'Fredoka';font-weight:600;color:var(--plum)">&#9830; ${s.price}</div></div>
         ${s.description ? '<div class="quest-desc">' + esc(s.description) + '</div>' : ''}
-        <div class="gm-quest-actions">
-          <button class="gm-action-btn delete" onclick="deleteShopItem('${d.id}')">Entfernen</button>
-        </div>
+        <div class="gm-quest-actions"><button class="gm-action-btn delete" onclick="deleteShopItem('${s.id}')">Entfernen</button></div>
       </div>`;
     });
     gmEl.innerHTML = html;
   }
 }
 
-// ─── History ───
-function renderHistory(docs) {
+function renderHistory() {
   const gmEl = document.getElementById('gmHistoryTab');
   const pEl = document.getElementById('rewardsListPlayer');
-
-  if (docs.length === 0) {
+  if (allHistory.length === 0) {
     const empty = '<div class="empty-state"><div class="empty-icon">&#128214;</div><div class="empty-text">Noch kein Verlauf vorhanden.</div></div>';
-    gmEl.innerHTML = empty;
-    pEl.innerHTML = empty;
-    return;
+    gmEl.innerHTML = empty; pEl.innerHTML = empty; return;
   }
-
-  let gmHtml = '', pHtml = '';
-  docs.forEach(d => {
-    const h = d.data();
-    const icon = h.type === 'quest_done' ? '&#9876;&#65039;' : h.type === 'purchase' ? '&#128717;&#65039;' : h.type === 'level_up' ? '&#11088;' : '&#128196;';
+  let html = '';
+  allHistory.forEach(h => {
+    const icon = h.type === 'quest_done' ? '&#9876;&#65039;' : h.type === 'purchase' ? '&#128717;&#65039;' : '&#11088;';
     const time = h.timestamp ? formatTime(h.timestamp) : '';
-    const entry = `<div class="reward-entry">
+    html += `<div class="reward-entry">
       <div class="re-icon">${icon}</div>
-      <div class="re-info">
-        <div class="re-title">${esc(h.title || '')}</div>
-        <div class="re-time">${time}</div>
-      </div>
-      ${h.expGain ? '<div class="re-value">+' + h.expGain + ' EXP</div>' : ''}
-      ${h.tokenGain ? '<div class="re-value" style="color:var(--plum)">+' + h.tokenGain + ' &#9830;</div>' : ''}
-      ${h.tokenSpent ? '<div class="re-value" style="color:var(--rose)">-' + h.tokenSpent + ' &#9830;</div>' : ''}
+      <div class="re-info"><div class="re-title">${esc(h.title)}</div><div class="re-time">${time}</div></div>
+      ${h.exp_gain ? '<div class="re-value">+' + h.exp_gain + ' EXP</div>' : ''}
+      ${h.token_gain ? '<div class="re-value" style="color:var(--plum)">+' + h.token_gain + ' &#9830;</div>' : ''}
+      ${h.token_spent ? '<div class="re-value" style="color:var(--rose)">-' + h.token_spent + ' &#9830;</div>' : ''}
     </div>`;
-    gmHtml += entry;
-    pHtml += entry;
   });
-
-  gmEl.innerHTML = '<div class="section-title">Verlauf</div>' + gmHtml;
-  pEl.innerHTML = '<div class="section-title">Belohnungen &amp; Verlauf</div>' + pHtml;
+  gmEl.innerHTML = '<div class="section-title">Verlauf</div>' + html;
+  pEl.innerHTML = '<div class="section-title">Belohnungen &amp; Verlauf</div>' + html;
 }
 
 // ─── Actions ───
 async function createQuest() {
   const name = document.getElementById('questName').value.trim();
   if (!name) { showToast('Bitte einen Namen eingeben', 'error'); return; }
-
-  const quest = {
+  const { error } = await supabase.from('quests').insert({
     name,
     description: document.getElementById('questDesc').value.trim(),
-    expReward: parseInt(document.getElementById('questExp').value) || 25,
-    tokenReward: parseInt(document.getElementById('questTokens').value) || 5,
-    status: 'active',
-    createdAt: Date.now()
-  };
-
-  if (db) {
-    await db.collection('quests').add(quest);
-  }
+    exp_reward: parseInt(document.getElementById('questExp').value) || 25,
+    token_reward: parseInt(document.getElementById('questTokens').value) || 5,
+    status: 'active'
+  });
+  if (error) { showToast('Fehler: ' + error.message, 'error'); return; }
   closeModal('questModal');
   document.getElementById('questName').value = '';
   document.getElementById('questDesc').value = '';
@@ -1141,132 +767,83 @@ async function createQuest() {
 }
 
 async function submitQuest(id) {
-  if (db) {
-    await db.doc('quests/' + id).update({ status: 'pending_confirm' });
-    showToast('Quest eingereicht! Warte auf Bestatigung.', 'info');
-    document.getElementById('raccoonMood').innerHTML = '&#128522;';
-  }
+  await supabase.from('quests').update({ status: 'pending_confirm' }).eq('id', id);
+  showToast('Quest eingereicht! Warte auf Bestätigung.', 'info');
 }
 
 async function confirmQuest(id) {
-  if (!db) return;
-
-  const snap = await db.doc('quests/' + id).get();
-  if (!snap.exists) return;
-  const q = snap.data();
-
-  const newExp = playerData.exp + q.expReward;
-  const newTokens = playerData.tokens + q.tokenReward;
-  const needed = EXP_PER_LEVEL(playerData.level);
+  const quest = allQuests.find(q => q.id === id);
+  if (!quest) return;
+  const newExp = playerData.exp + quest.exp_reward;
+  const newTokens = playerData.tokens + quest.token_reward;
   let newLevel = playerData.level;
-
   let remainingExp = newExp;
   while (remainingExp >= EXP_PER_LEVEL(newLevel)) {
     remainingExp -= EXP_PER_LEVEL(newLevel);
     newLevel++;
   }
-
-  await db.doc('quests/' + id).update({ status: 'done', completedAt: Date.now() });
-  await db.doc('player/stats').set({ level: newLevel, exp: remainingExp, tokens: newTokens });
-
-  await db.collection('history').add({
-    type: 'quest_done',
-    title: q.name,
-    expGain: q.expReward,
-    tokenGain: q.tokenReward,
-    timestamp: Date.now()
-  });
-
-  if (newLevel > playerData.level) {
-    await db.collection('history').add({
-      type: 'level_up',
-      title: 'Level ' + newLevel + ' erreicht!',
-      timestamp: Date.now()
-    });
+  const oldLevel = playerData.level;
+  await Promise.all([
+    supabase.from('quests').update({ status: 'done', completed_at: new Date().toISOString() }).eq('id', id),
+    supabase.from('player_stats').update({ level: newLevel, exp: remainingExp, tokens: newTokens }).eq('id', 1),
+    supabase.from('history').insert({ type: 'quest_done', title: quest.name, exp_gain: quest.exp_reward, token_gain: quest.token_reward })
+  ]);
+  if (newLevel > oldLevel) {
+    await supabase.from('history').insert({ type: 'level_up', title: 'Level ' + newLevel + ' erreicht!' });
+    setTimeout(() => showLevelUp(newLevel), 600);
   }
-
-  showToast('Quest bestatigt! +' + q.expReward + ' EXP, +' + q.tokenReward + ' Tokens', 'success');
-
-  if (newLevel > playerData.level) {
-    setTimeout(() => showLevelUp(newLevel), 800);
-  }
+  showToast('Quest bestätigt! +' + quest.exp_reward + ' EXP, +' + quest.token_reward + ' Tokens', 'success');
 }
 
 async function denyQuest(id) {
-  if (db) {
-    await db.doc('quests/' + id).update({ status: 'active' });
-    showToast('Quest zuruckgewiesen', 'info');
-  }
+  await supabase.from('quests').update({ status: 'active' }).eq('id', id);
+  showToast('Quest zurückgewiesen', 'info');
 }
 
 async function deleteQuest(id) {
-  if (db) {
-    await db.doc('quests/' + id).delete();
-    showToast('Quest geloscht', 'info');
-  }
+  await supabase.from('quests').delete().eq('id', id);
+  showToast('Quest gelöscht', 'info');
 }
 
 async function createShopItem() {
   const name = document.getElementById('shopItemName').value.trim();
   if (!name) { showToast('Bitte einen Namen eingeben', 'error'); return; }
-
-  const item = {
+  const { error } = await supabase.from('shop_items').insert({
     name,
     description: document.getElementById('shopItemDesc').value.trim(),
-    icon: document.getElementById('shopItemIcon').value.trim() || '&#127873;',
-    price: parseInt(document.getElementById('shopItemPrice').value) || 10,
-    createdAt: Date.now()
-  };
-
-  if (db) {
-    await db.collection('shop').add(item);
-  }
+    icon: document.getElementById('shopItemIcon').value.trim() || '\u{1F381}',
+    price: parseInt(document.getElementById('shopItemPrice').value) || 10
+  });
+  if (error) { showToast('Fehler: ' + error.message, 'error'); return; }
   closeModal('shopModal');
   document.getElementById('shopItemName').value = '';
   document.getElementById('shopItemDesc').value = '';
-  document.getElementById('shopItemIcon').value = '&#127873;';
+  document.getElementById('shopItemIcon').value = '\u{1F381}';
   document.getElementById('shopItemPrice').value = '10';
-  showToast('Artikel hinzugefugt!', 'success');
+  showToast('Artikel hinzugefügt!', 'success');
 }
 
 async function deleteShopItem(id) {
-  if (db) {
-    await db.doc('shop/' + id).delete();
-    showToast('Artikel entfernt', 'info');
-  }
+  await supabase.from('shop_items').delete().eq('id', id);
+  showToast('Artikel entfernt', 'info');
 }
 
 async function buyItem(id) {
-  if (!db) return;
-  const snap = await db.doc('shop/' + id).get();
-  if (!snap.exists) return;
-  const item = snap.data();
-
-  if (playerData.tokens < item.price) {
-    showToast('Nicht genug Tokens!', 'error');
-    return;
-  }
-
-  const newTokens = playerData.tokens - item.price;
-  await db.doc('player/stats').set({ ...playerData, tokens: newTokens });
-
-  await db.collection('history').add({
-    type: 'purchase',
-    title: item.name,
-    tokenSpent: item.price,
-    timestamp: Date.now()
-  });
-
-  showToast(item.name + ' eingelost!', 'success');
+  const item = allShopItems.find(s => s.id === id);
+  if (!item || playerData.tokens < item.price) { showToast('Nicht genug Tokens!', 'error'); return; }
+  await Promise.all([
+    supabase.from('player_stats').update({ tokens: playerData.tokens - item.price }).eq('id', 1),
+    supabase.from('history').insert({ type: 'purchase', title: item.name, token_spent: item.price })
+  ]);
+  showToast(item.name + ' eingelöst!', 'success');
 }
 
-// ─── UI Helpers ───
+// ─── UI ───
 function switchPlayerView(btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const viewId = btn.dataset.view;
   document.querySelectorAll('#playerApp > .view').forEach(v => v.classList.remove('active'));
-  document.getElementById(viewId).classList.add('active');
+  document.getElementById(btn.dataset.view).classList.add('active');
 }
 
 function switchGmTab(btn) {
@@ -1274,29 +851,22 @@ function switchGmTab(btn) {
   btn.classList.add('active');
   currentGmTab = btn.dataset.gmtab;
   document.querySelectorAll('.gm-tab-content').forEach(el => el.hidden = true);
-  document.getElementById('gm' + capitalize(currentGmTab) + 'Tab').hidden = false;
+  document.getElementById('gm' + currentGmTab.charAt(0).toUpperCase() + currentGmTab.slice(1) + 'Tab').hidden = false;
 }
 
 function openCreateModal() {
-  const modalId = currentGmTab === 'shop' ? 'shopModal' : 'questModal';
-  document.getElementById(modalId).classList.add('open');
+  document.getElementById(currentGmTab === 'shop' ? 'shopModal' : 'questModal').classList.add('open');
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.remove('open');
-  });
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast ' + (type || 'info') + ' show';
+  t.textContent = msg; t.className = 'toast ' + (type || 'info') + ' show';
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
@@ -1305,42 +875,17 @@ function showLevelUp(level) {
   document.getElementById('levelUpOverlay').classList.add('show');
 }
 
-function dismissLevelUp() {
-  document.getElementById('levelUpOverlay').classList.remove('show');
-}
+function dismissLevelUp() { document.getElementById('levelUpOverlay').classList.remove('show'); }
 
 function formatTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const diffMs = now - d;
-  if (diffMs < 60000) return 'Gerade eben';
-  if (diffMs < 3600000) return Math.floor(diffMs / 60000) + ' Min.';
-  if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + ' Std.';
+  const d = new Date(ts); const now = new Date(); const ms = now - d;
+  if (ms < 60000) return 'Gerade eben';
+  if (ms < 3600000) return Math.floor(ms / 60000) + ' Min.';
+  if (ms < 86400000) return Math.floor(ms / 3600000) + ' Std.';
   return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
 }
 
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-function renderFromLocalData() {
-  renderPlayerStats();
-  document.getElementById('questListPlayer').innerHTML = '<div class="empty-state"><div class="empty-icon">&#128220;</div><div class="empty-text">Datenbank wird geladen...</div></div>';
-}
-
-// ─── Init player data if missing ───
-async function ensurePlayerData() {
-  if (!db) return;
-  const snap = await db.doc('player/stats').get();
-  if (!snap.exists) {
-    await db.doc('player/stats').set({ level: 1, exp: 0, tokens: 0 });
-  }
-}
-
-// ─── Boot ───
-ensurePlayerData().then(() => init());
+init();
 </script>
