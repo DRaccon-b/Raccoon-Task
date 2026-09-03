@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -795,6 +795,62 @@ document.querySelectorAll('.modal').forEach((modal) => {
     if (event.target === modal) modal.classList.remove('is-open');
   });
 });
+
+/**
+ * Swipe-down-to-dismiss for the bottom sheets, matching the iOS gesture.
+ * Only starts when the touch begins on the handle or while the sheet's own
+ * content is scrolled to the top — otherwise a drag inside a scrollable
+ * sheet would fight the page instead of scrolling it.
+ */
+function makeSheetDraggable(sheet) {
+  const modal = sheet.closest('.modal');
+  let startY = null;
+  let currentY = 0;
+  let dragging = false;
+
+  const canStartDrag = (target) => {
+    if (target.closest('.sheet__handle')) return true;
+    // Don't hijack taps/drags meant for form controls (typing, selecting,
+    // tapping a tier button) — only bare sheet area starts a drag.
+    if (target.closest('input, textarea, select, button, a')) return false;
+    return sheet.scrollTop <= 0;
+  };
+
+  sheet.addEventListener('touchstart', (event) => {
+    if (!canStartDrag(event.target)) { startY = null; return; }
+    startY = event.touches[0].clientY;
+    currentY = 0;
+    dragging = false;
+    sheet.style.transition = 'none';
+  }, { passive: true });
+
+  sheet.addEventListener('touchmove', (event) => {
+    if (startY == null) return;
+    const delta = event.touches[0].clientY - startY;
+    if (delta <= 0) { currentY = 0; return; } // ignore upward drags
+    dragging = true;
+    currentY = delta;
+    sheet.style.transform = `translateY(${delta}px)`;
+  }, { passive: true });
+
+  const endDrag = () => {
+    if (startY == null) return;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    // Far enough, or a real drag past a small threshold: close it.
+    if (dragging && currentY > 110) {
+      modal.classList.remove('is-open');
+    }
+    startY = null;
+    currentY = 0;
+    dragging = false;
+  };
+
+  sheet.addEventListener('touchend', endDrag);
+  sheet.addEventListener('touchcancel', endDrag);
+}
+
+document.querySelectorAll('.sheet').forEach(makeSheetDraggable);
 
 $('questForm').addEventListener('submit', (event) => {
   event.preventDefault();
