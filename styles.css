@@ -408,6 +408,163 @@ body[data-screen="gm"] .version {
   50% { transform: translateY(-12px) rotate(5deg); opacity: 0.8; }
 }
 
+/* --- Chest tray (raccoon screen) ------------------------------------------
+   A confirmed quest's reward waits here rather than crediting instantly —
+   opening it is a small ceremony of its own. */
+.chest-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 4px;
+  padding: 0 4px;
+}
+.chest-tray__title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+}
+.chest-list { display: flex; flex-direction: column; gap: 10px; }
+
+.chest-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s, opacity 0.3s;
+}
+.chest-card[data-cat="basic"] { --tier: var(--cat-basic); --tier-bg: var(--cat-basic-bg); }
+.chest-card[data-cat="special"] { --tier: var(--cat-special); --tier-bg: var(--cat-special-bg); }
+.chest-card[data-cat="rapid_fire"] { --tier: var(--cat-rapid); --tier-bg: var(--cat-rapid-bg); }
+.chest-card[data-cat="divine"] { --tier: var(--cat-divine); --tier-bg: var(--cat-divine-bg); }
+.chest-card { border-color: var(--tier); }
+
+.chest-card__icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--tier-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  animation: chest-glow 1.8s ease-in-out infinite;
+}
+@keyframes chest-glow {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.08) rotate(-4deg); }
+}
+
+.chest-card__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.chest-card__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.chest-card__open { flex-shrink: 0; }
+
+/* A quick shake while the open request is in flight — the tap already
+   feels like something happened before the network catches up. */
+.chest-card.is-opening {
+  animation: chest-shake 0.45s ease-in-out;
+  pointer-events: none;
+  opacity: 0.7;
+}
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-4px) rotate(-2deg); }
+  40% { transform: translateX(4px) rotate(2deg); }
+  60% { transform: translateX(-3px) rotate(-1deg); }
+  80% { transform: translateX(3px) rotate(1deg); }
+}
+
+/* --- Chest reveal overlay -------------------------------------------------- */
+.chestreveal {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 18, 32, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.chestreveal.is-open { opacity: 1; pointer-events: auto; }
+.chestreveal__card {
+  max-width: 320px;
+  padding: 40px 32px;
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  transform: scale(0.8);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.chestreveal.is-open .chestreveal__card {
+  transform: scale(1);
+  animation: chest-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes chest-pop {
+  0% { transform: scale(0.6) rotate(-6deg); }
+  55% { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.chestreveal__icon { font-size: 56px; margin-bottom: 8px; }
+.chestreveal__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--plum);
+}
+.chestreveal__name {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+.chestreveal__rewards {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+.chestreveal__reward {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--honey-glow);
+  color: var(--honey-deep);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.chestreveal__reward:last-child { background: var(--plum-soft); color: var(--plum); }
+.chestreveal__dismiss {
+  margin-top: 20px;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 20px;
+  background: var(--plum);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
 /* --- Bottom navigation --------------------------------------------------- */
 .bottom-nav {
   position: sticky;

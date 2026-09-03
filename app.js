@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.3.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -57,10 +57,15 @@ const state = {
   quests: [],
   shopItems: [],
   history: [],
+  chests: [],           // confirmed quests' rewards, unopened
   // Quest form: which tier is picked, and the quest being edited (null = new).
   formCategory: DEFAULT_CATEGORY,
   editingQuestId: null,
 };
+
+/** A level-up queued behind the chest-reveal overlay, shown once it closes. */
+let pendingLevelUp = null;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Supabase client, or null when the library failed to load. */
 let sb = null;
@@ -174,14 +179,15 @@ async function loadAll() {
   if (!sb) return;
   await reviveDueQuests();
 
-  const [stats, quests, shop, history] = await Promise.all([
+  const [stats, quests, shop, history, chests] = await Promise.all([
     sb.from('player_stats').select('*').eq('id', 1).maybeSingle(),
     sb.from('quests').select('*').order('created_at', { ascending: false }),
     sb.from('shop_items').select('*').order('created_at', { ascending: false }),
     sb.from('history').select('*').order('timestamp', { ascending: false }).limit(HISTORY_LIMIT),
+    sb.from('chests').select('*').order('created_at', { ascending: true }),
   ]);
 
-  const failure = [stats, quests, shop, history].find((r) => r.error);
+  const failure = [stats, quests, shop, history, chests].find((r) => r.error);
   if (failure) {
     showBanner('Daten konnten nicht geladen werden. Prüfe deine Verbindung.');
     console.error('Laden fehlgeschlagen:', failure.error);
@@ -193,6 +199,7 @@ async function loadAll() {
   state.quests = quests.data ?? [];
   state.shopItems = shop.data ?? [];
   state.history = history.data ?? [];
+  state.chests = chests.data ?? [];
   renderAll();
 }
 
@@ -233,6 +240,15 @@ async function refresh(table) {
       .order('timestamp', { ascending: false }).limit(HISTORY_LIMIT);
     state.history = data ?? [];
     renderHistory();
+    return;
+  }
+
+  if (table === 'chests') {
+    const { data } = await sb.from('chests').select('*').order('created_at', { ascending: true });
+    state.chests = data ?? [];
+    renderChests();
+    // The raccoon's mood/status leads with "a chest is waiting".
+    renderRaccoon();
   }
 }
 
@@ -240,7 +256,7 @@ function subscribeRealtime() {
   if (!sb) return;
   if (channel) sb.removeChannel(channel);
 
-  const tables = ['player_stats', 'quests', 'shop_items', 'history'];
+  const tables = ['player_stats', 'quests', 'shop_items', 'history', 'chests'];
   channel = sb.channel('couples-quest');
 
   for (const table of tables) {
@@ -262,6 +278,7 @@ function renderAll() {
   renderQuests();
   renderShop();
   renderHistory();
+  renderChests();
   renderRaccoon();
 }
 
@@ -287,11 +304,17 @@ function renderHeader() {
 function renderRaccoon() {
   const active = state.quests.filter((q) => q.status === 'active').length;
   const pending = state.quests.filter((q) => q.status === 'pending_confirm').length;
+  const chestCount = state.chests.length;
 
   let mood = '😴';
   let status = 'Keine Quests offen. Zeit zum Chillen.';
 
-  if (pending > 0) {
+  if (chestCount > 0) {
+    mood = '🤩';
+    status = chestCount === 1
+      ? 'Eine Truhe wartet auf dich!'
+      : `${chestCount} Truhen warten auf dich!`;
+  } else if (pending > 0) {
     mood = '🤞';
     status = pending === 1
       ? 'Eine Quest wartet auf Bestätigung.'
@@ -305,6 +328,43 @@ function renderRaccoon() {
 
   $('raccoonMood').textContent = mood;
   $('raccoonStatus').textContent = status;
+}
+
+/** One unopened reward, shown on the player's home screen. */
+function chestCard(chest) {
+  const cat = CATEGORIES[chest.category] ? chest.category : DEFAULT_CATEGORY;
+  const tier = CATEGORIES[cat];
+
+  return `<article class="chest-card" data-cat="${cat}" data-chest-id="${chest.id}">
+    <div class="chest-card__icon" aria-hidden="true">🎁</div>
+    <div class="chest-card__info">
+      <h3 class="chest-card__name">${esc(chest.name)}</h3>
+      <span class="tier tier--${cat}">
+        <span class="tier__icon" aria-hidden="true">${tier.icon}</span>${tier.label}
+      </span>
+      <div class="reward-row">
+        <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">⚡</span>${chest.exp_reward} EXP</span>
+        <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${chest.token_reward} Tokens</span>
+      </div>
+    </div>
+    <button class="btn btn--sm btn--confirm chest-card__open" data-action="open-chest" data-id="${chest.id}">Öffnen</button>
+  </article>`;
+}
+
+function renderChests() {
+  const tray = $('chestTray');
+  if (state.chests.length === 0) {
+    tray.hidden = true;
+    tray.innerHTML = '';
+    return;
+  }
+
+  tray.hidden = false;
+  const title = state.chests.length === 1 ? 'Eine Truhe wartet' : `${state.chests.length} Truhen warten`;
+  tray.innerHTML = `
+    <h2 class="chest-tray__title">🎁 ${title}</h2>
+    <div class="chest-list">${state.chests.map(chestCard).join('')}</div>
+  `;
 }
 
 function questCard(quest, { forGameMaster }) {
@@ -464,7 +524,7 @@ function renderShop() {
 }
 
 function renderHistory() {
-  const icons = { quest_done: '⚔️', purchase: '🛍️', level_up: '⭐' };
+  const icons = { quest_done: '⚔️', chest_opened: '🎁', purchase: '🛍️', level_up: '⭐' };
 
   if (state.history.length === 0) {
     const empty = emptyState('📖', 'Noch kein Verlauf vorhanden.');
@@ -508,6 +568,10 @@ function setRole(role) {
   // Always open the QuestBook on the quest list — that is where pending
   // confirmations show up, and they are the reason to open it at all.
   if (role === 'gm') setGmTab('quests');
+  // Same idea for the player: chests wait on the raccoon screen, so that
+  // is the one screen a role switch should never leave hidden behind
+  // whatever tab was open last.
+  if (role === 'player') setPlayerView('viewRaccoon');
   renderAll();
 }
 
@@ -669,9 +733,50 @@ async function confirmQuest(id) {
     return;
   }
 
+  // The reward doesn't credit yet — it waits as a chest on the player's
+  // home screen until they open it.
+  const { error: chestError } = await sb.from('chests').insert({
+    quest_id: quest.id,
+    name: quest.name,
+    category: categoryOf(quest),
+    exp_reward: quest.exp_reward,
+    token_reward: quest.token_reward,
+  });
+
+  if (chestError) { reportError(chestError, 'Truhe konnte nicht erstellt werden'); return; }
+  showToast('Bestätigt! Eine Truhe wartet auf dem Hauptbildschirm.', 'success');
+}
+
+/** Claim a chest's reward: delete-then-check makes a double tap or a
+ * second device racing for the same chest a safe no-op instead of a
+ * double payout. */
+async function openChest(id) {
+  if (!requireDb()) return;
+
+  const btn = document.querySelector(`.chest-card__open[data-id="${id}"]`);
+  const card = document.querySelector(`.chest-card[data-chest-id="${id}"]`);
+  if (btn) btn.disabled = true;
+  card?.classList.add('is-opening');
+
+  // A short shake before the network round-trip makes the tap feel instant.
+  await sleep(420);
+
+  const { data: claimed, error } = await sb.from('chests').delete().eq('id', id).select();
+  if (error) {
+    reportError(error, 'Truhe konnte nicht geöffnet werden');
+    card?.classList.remove('is-opening');
+    if (btn) btn.disabled = false;
+    return;
+  }
+  if (!claimed || claimed.length === 0) {
+    // Already opened — the realtime refresh will drop the card shortly.
+    return;
+  }
+
+  const chest = claimed[0];
   const previousLevel = state.stats.level;
-  const { level, exp } = applyExp(state.stats, quest.exp_reward);
-  const tokens = state.stats.tokens + quest.token_reward;
+  const { level, exp } = applyExp(state.stats, chest.exp_reward);
+  const tokens = state.stats.tokens + chest.token_reward;
 
   const { error: statsError } = await sb.from('player_stats')
     .update({ level, exp, tokens, updated_at: new Date().toISOString() })
@@ -680,18 +785,34 @@ async function confirmQuest(id) {
   if (statsError) { reportError(statsError, 'Belohnung konnte nicht gutgeschrieben werden'); return; }
 
   const entries = [{
-    type: 'quest_done',
-    title: quest.name,
-    exp_gain: quest.exp_reward,
-    token_gain: quest.token_reward,
+    type: 'chest_opened',
+    title: chest.name,
+    exp_gain: chest.exp_reward,
+    token_gain: chest.token_reward,
   }];
   if (level > previousLevel) {
     entries.push({ type: 'level_up', title: `Level ${level} erreicht!` });
   }
   await sb.from('history').insert(entries);
 
-  showToast(`Bestätigt! +${quest.exp_reward} EXP, +${quest.token_reward} Tokens`, 'success');
-  if (level > previousLevel) setTimeout(() => showLevelUp(level), 600);
+  showChestReveal(chest, level > previousLevel ? level : null);
+}
+
+function showChestReveal(chest, newLevel) {
+  $('chestRevealName').textContent = chest.name;
+  $('chestRevealExp').textContent = `+${chest.exp_reward} EXP`;
+  $('chestRevealTokens').textContent = `+${chest.token_reward} ◆`;
+  pendingLevelUp = newLevel;
+  $('chestReveal').classList.add('is-open');
+}
+
+function dismissChestReveal() {
+  $('chestReveal').classList.remove('is-open');
+  if (pendingLevelUp != null) {
+    const level = pendingLevelUp;
+    pendingLevelUp = null;
+    setTimeout(() => showLevelUp(level), 350);
+  }
 }
 
 async function denyQuest(id) {
@@ -774,6 +895,8 @@ const actions = {
     if (quest) openQuestForm(quest);
   },
   'dismiss-levelup': () => $('levelup').classList.remove('is-open'),
+  'dismiss-chest-reveal': () => dismissChestReveal(),
+  'open-chest': (el) => openChest(el.dataset.id),
   'submit-quest': (el) => submitQuest(el.dataset.id),
   'confirm-quest': (el) => confirmQuest(el.dataset.id),
   'deny-quest': (el) => denyQuest(el.dataset.id),
