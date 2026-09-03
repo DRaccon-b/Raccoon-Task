@@ -480,16 +480,100 @@ body[data-screen="gm"] .version {
   transform-origin: 50% 100%;
 }
 
-/* Each tier gets its own chest: coloured bands, and gold wood for Divine. */
-.chest-card[data-cat="basic"], .chestreveal__icon[data-cat="basic"] { --chest-metal: #C08E62; }
-.chest-card[data-cat="special"], .chestreveal__icon[data-cat="special"] { --chest-metal: #6EA8FA; }
-.chest-card[data-cat="rapid_fire"], .chestreveal__icon[data-cat="rapid_fire"] { --chest-metal: #F87171; }
-.chest-card[data-cat="divine"], .chestreveal__icon[data-cat="divine"] {
-  --chest-wood: #B98E1E;
-  --chest-wood-light: #DCB544;
-  --chest-wood-dark: #8C6B12;
-  --chest-metal: #FFF1BE;
+/* --- Per-tier chests ------------------------------------------------------
+   Each variant carries its own palette; the shapes differ in the markup. */
+
+/* Basic — plain crate, warm wood and bronze. */
+.chest--basic { --chest-metal: #C08E62; }
+
+/* Rapid Fire — charred timber, glowing iron, flame licking up behind. */
+.chest--rapid_fire {
+  --chest-wood: #3B211B;
+  --chest-wood-light: #553024;
+  --chest-wood-dark: #24120F;
+  --chest-metal: #E2452B;
+  --chest-inside: #150806;
+  --chest-glow: #FFB347;
+  --chest-ember: #FF7A1A;
+  --chest-flame-lo: #F0561F;
+  --chest-flame-hi: #FFC24A;
 }
+.chest__flame { fill: var(--chest-flame-lo); }
+.chest__flame--tall { fill: var(--chest-flame-hi); }
+.chest__flames {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flame-lick 1.1s ease-in-out infinite;
+}
+@keyframes flame-lick {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.92; }
+  40% { transform: scaleY(1.16) scaleX(0.94); opacity: 1; }
+  70% { transform: scaleY(0.92) scaleX(1.05); opacity: 0.85; }
+}
+.chest__ember {
+  fill: none;
+  stroke: var(--chest-ember);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/* Special — lacquered royal blue with silver trim and a set gem. */
+.chest--special {
+  --chest-wood: #24408C;
+  --chest-wood-light: #35589F;
+  --chest-wood-dark: #182C64;
+  --chest-metal: #D8E2F0;
+  --chest-inside: #0E1B3D;
+  --chest-glow: #8FC4FF;
+  --chest-trim: #9FB6D8;
+  --chest-gem: #4DA6FF;
+  --chest-gem-shine: #BFE3FF;
+}
+.chest__rivet { fill: var(--chest-trim); }
+.chest__trim {
+  fill: none;
+  stroke: var(--chest-trim);
+  stroke-width: 1.2;
+}
+.chest__gem { fill: var(--chest-gem); }
+.chest__gem-shine { fill: var(--chest-gem-shine); }
+
+/* Divine — pale gold reliquary, haloed and winged. */
+.chest--divine {
+  --chest-wood: #DFAF3C;
+  --chest-wood-light: #F2D577;
+  --chest-wood-dark: #B0821D;
+  --chest-metal: #FFF6D8;
+  --chest-inside: #5A430F;
+  --chest-glow: #FFEFA8;
+  --chest-ray: #F5C93F;
+  --chest-halo: #FFD75E;
+  --chest-wing: #FFF7DF;
+  --chest-wing-edge: #E0B33C;
+  --chest-star: #FFFDF2;
+}
+.chest__ray { fill: var(--chest-ray); opacity: 0.38; }
+.chest__rays {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: ray-turn 18s linear infinite;
+}
+@keyframes ray-turn {
+  to { transform: rotate(360deg); }
+}
+.chest__halo {
+  fill: none;
+  stroke: var(--chest-halo);
+  stroke-width: 2.4;
+}
+/* An edge keeps the pale wings readable on a light card. */
+.chest__wing {
+  fill: var(--chest-wing);
+  stroke: var(--chest-wing-edge);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+.chest__star { fill: var(--chest-star); }
 
 /* Waiting on the shelf: a slow rock, as if something inside wants out. */
 .chest-card .chest {

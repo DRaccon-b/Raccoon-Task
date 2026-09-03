@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -331,12 +331,130 @@ function renderRaccoon() {
   $('raccoonStatus').textContent = status;
 }
 
+/* --- Chest artwork --------------------------------------------------------
+   One chest per tier, drawn rather than just recoloured: a plain crate for
+   Basic, a spiked hell-forge for Rapid Fire, a lacquered royal casket for
+   Special, and a winged reliquary for Divine. Every variant keeps the same
+   anatomy — an interior, a glow, a base, and a `.chest__lid` group — so the
+   reveal's opening animation works on all four, and all colours come from
+   CSS variables. Everything stays inside the 0–64 viewBox so a chest can
+   never spill over its card.
+   ------------------------------------------------------------------------ */
+
+const CHEST_INTERIOR = `
+    <rect class="chest__inside" x="9" y="20" width="46" height="15" rx="2"/>
+    <ellipse class="chest__glow" cx="32" cy="29" rx="19" ry="8"/>`;
+
+const CHEST_ART = {
+  // Everyday wooden crate: iron bands, a simple lock.
+  basic: (spark) => `
+    ${CHEST_INTERIOR}${spark}
+    <path class="chest__wood" d="M6 34 h52 v13 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <path class="chest__wood-dark" d="M6 45 h52 v2 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <rect class="chest__metal" x="6" y="31" width="52" height="5" rx="1"/>
+    <rect class="chest__metal" x="14" y="34" width="5" height="17"/>
+    <rect class="chest__metal" x="45" y="34" width="5" height="17"/>
+    <g class="chest__lid">
+      <path class="chest__wood" d="M6 32 v-6 C6 14 17 6 32 6 C47 6 58 14 58 26 v6 z"/>
+      <path class="chest__wood-light" d="M12 26 C12 17 20 11 32 11 C44 11 52 17 52 26 z"/>
+      <rect class="chest__metal" x="14" y="20" width="5" height="12"/>
+      <rect class="chest__metal" x="45" y="20" width="5" height="12"/>
+      <rect class="chest__metal" x="6" y="27" width="52" height="5" rx="1"/>
+    </g>
+    <rect class="chest__metal" x="27" y="29" width="10" height="11" rx="2"/>
+    <circle class="chest__keyhole" cx="32" cy="34" r="1.8"/>`,
+
+  // Hell-forged: flames licking up behind, charred iron, ember cracks, spikes.
+  rapid_fire: (spark) => `
+    <g class="chest__flames">
+      <path class="chest__flame" d="M11 23 C7 16 13 12 12 5 C18 10 19 17 16 23 Z"/>
+      <path class="chest__flame chest__flame--tall" d="M28 17 C23 7 33 4 31 0 C40 6 41 12 36 17 Z"/>
+      <path class="chest__flame" d="M48 23 C44 16 50 12 49 5 C55 10 56 17 53 23 Z"/>
+    </g>
+    ${CHEST_INTERIOR}${spark}
+    <path class="chest__wood" d="M6 34 h52 v14 a2 2 0 0 1 -2 2 h-48 a2 2 0 0 1 -2 -2 z"/>
+    <path class="chest__wood-dark" d="M6 45 h52 v3 a2 2 0 0 1 -2 2 h-48 a2 2 0 0 1 -2 -2 z"/>
+    <path class="chest__ember" d="M24 38 l3 4 l-2 5"/>
+    <path class="chest__ember" d="M40 38 l-3 4 l2 5"/>
+    <rect class="chest__metal" x="6" y="31" width="52" height="5"/>
+    <rect class="chest__metal" x="13" y="34" width="6" height="16"/>
+    <rect class="chest__metal" x="45" y="34" width="6" height="16"/>
+    <g class="chest__lid">
+      <path class="chest__metal" d="M19 13 l3 -8 l3 8 z"/>
+      <path class="chest__metal" d="M39 13 l3 -8 l3 8 z"/>
+      <path class="chest__wood" d="M6 32 v-4 L17 11 h30 L58 28 v4 z"/>
+      <path class="chest__wood-light" d="M17 11 h30 L51 19 H13 z"/>
+      <rect class="chest__metal" x="13" y="19" width="6" height="13"/>
+      <rect class="chest__metal" x="45" y="19" width="6" height="13"/>
+      <rect class="chest__metal" x="6" y="27" width="52" height="5"/>
+    </g>
+    <path class="chest__metal" d="M26 28 h12 v8 a6 6 0 0 1 -12 0 z"/>
+    <circle class="chest__keyhole" cx="32" cy="33" r="2"/>`,
+
+  // Royal casket: lacquered blue, silver trim with rivets, a gem on the lid.
+  special: (spark) => `
+    ${CHEST_INTERIOR}${spark}
+    <path class="chest__wood" d="M6 34 h52 v13 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <path class="chest__wood-dark" d="M6 45 h52 v2 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <rect class="chest__metal" x="6" y="31" width="52" height="5" rx="1.5"/>
+    <rect class="chest__metal" x="13" y="34" width="4" height="17" rx="1.5"/>
+    <rect class="chest__metal" x="47" y="34" width="4" height="17" rx="1.5"/>
+    <circle class="chest__rivet" cx="10" cy="41" r="1.3"/>
+    <circle class="chest__rivet" cx="54" cy="41" r="1.3"/>
+    <circle class="chest__rivet" cx="10" cy="47" r="1.3"/>
+    <circle class="chest__rivet" cx="54" cy="47" r="1.3"/>
+    <g class="chest__lid">
+      <path class="chest__wood" d="M6 32 v-5 C6 15 17 7 32 7 C47 7 58 15 58 27 v5 z"/>
+      <path class="chest__wood-light" d="M12 27 C12 18 20 12 32 12 C44 12 52 18 52 27 z"/>
+      <path class="chest__trim" d="M13 27 C13 19 21 13 32 13 C43 13 51 19 51 27"/>
+      <rect class="chest__metal" x="13" y="20" width="4" height="12" rx="1.5"/>
+      <rect class="chest__metal" x="47" y="20" width="4" height="12" rx="1.5"/>
+      <rect class="chest__metal" x="6" y="27" width="52" height="5" rx="1.5"/>
+      <path class="chest__gem" d="M32 14 L37.5 20.5 L32 27 L26.5 20.5 Z"/>
+      <path class="chest__gem-shine" d="M32 14 L34.5 20.5 L32 27 Z"/>
+    </g>
+    <rect class="chest__metal" x="27" y="29" width="10" height="11" rx="3"/>
+    <circle class="chest__keyhole" cx="32" cy="34" r="1.8"/>`,
+
+  // Reliquary: a halo, radiating light, wings, and a star struck on the lid.
+  divine: (spark) => `
+    <g class="chest__rays">
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(30 32 32)"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(-30 32 32)"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(60 32 32)"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(-60 32 32)"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(90 32 32)"/>
+      <path class="chest__ray" d="M29 32 L32 0 L35 32 Z" transform="rotate(-90 32 32)"/>
+    </g>
+    <!-- the halo clears the lid, so it still reads once the chest opens -->
+    <ellipse class="chest__halo" cx="32" cy="5" rx="11" ry="3"/>
+    <path class="chest__wing" d="M10 32 C3 27 0 36 5 41 C5 35 7 33 10 36 Z"/>
+    <path class="chest__wing" d="M54 32 C61 27 64 36 59 41 C59 35 57 33 54 36 Z"/>
+    ${CHEST_INTERIOR}${spark}
+    <path class="chest__wood" d="M6 34 h52 v13 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <path class="chest__wood-dark" d="M6 45 h52 v2 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <rect class="chest__metal" x="6" y="31" width="52" height="5" rx="2"/>
+    <rect class="chest__metal" x="13" y="34" width="5" height="17" rx="2"/>
+    <rect class="chest__metal" x="46" y="34" width="5" height="17" rx="2"/>
+    <g class="chest__lid">
+      <path class="chest__wood" d="M6 32 v-4 C6 17 17 10 32 10 C47 10 58 17 58 28 v4 z"/>
+      <path class="chest__wood-light" d="M12 28 C12 20 20 15 32 15 C44 15 52 20 52 28 z"/>
+      <rect class="chest__metal" x="13" y="22" width="5" height="10" rx="2"/>
+      <rect class="chest__metal" x="46" y="22" width="5" height="10" rx="2"/>
+      <rect class="chest__metal" x="6" y="27" width="52" height="5" rx="2"/>
+      <path class="chest__star" d="M32 14 L33.9 19.6 L39.5 21.5 L33.9 23.4 L32 29 L30.1 23.4 L24.5 21.5 L30.1 19.6 Z"/>
+    </g>
+    <rect class="chest__metal" x="27" y="29" width="10" height="11" rx="3"/>
+    <circle class="chest__keyhole" cx="32" cy="34" r="1.8"/>`,
+};
+
 /**
- * Treasure chest artwork. The lid is its own group so it can swing open on
- * the reveal; every colour comes from a CSS variable so each tier gets its
- * own chest. `sparkles` adds the burst that only the reveal needs.
+ * Render a chest for one tier. `sparkles` adds the burst the reveal needs;
+ * the tray's resting chests leave it off.
  */
-function chestSvg({ sparkles = false } = {}) {
+function chestSvg(category = DEFAULT_CATEGORY, { sparkles = false } = {}) {
+  const cat = CATEGORIES[category] ? category : DEFAULT_CATEGORY;
   const spark = sparkles ? `
     <g class="chest__sparks">
       <circle class="chest__spark" cx="20" cy="26" r="2"/>
@@ -346,31 +464,8 @@ function chestSvg({ sparkles = false } = {}) {
       <circle class="chest__spark" cx="39" cy="24" r="1.6"/>
     </g>` : '';
 
-  return `<svg class="chest" viewBox="0 0 64 64" role="img" aria-label="Schatztruhe">
-    <!-- interior and glow, uncovered as the lid lifts -->
-    <rect class="chest__inside" x="9" y="20" width="46" height="15" rx="2"/>
-    <ellipse class="chest__glow" cx="32" cy="29" rx="19" ry="8"/>
-    ${spark}
-
-    <!-- base -->
-    <path class="chest__wood" d="M6 34 h52 v13 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
-    <path class="chest__wood-dark" d="M6 45 h52 v2 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
-    <rect class="chest__metal" x="6" y="31" width="52" height="5" rx="1"/>
-    <rect class="chest__metal" x="14" y="34" width="5" height="17"/>
-    <rect class="chest__metal" x="45" y="34" width="5" height="17"/>
-
-    <!-- lid: pivots on the seam when the chest opens -->
-    <g class="chest__lid">
-      <path class="chest__wood" d="M6 32 v-6 C6 14 17 6 32 6 C47 6 58 14 58 26 v6 z"/>
-      <path class="chest__wood-light" d="M12 26 C12 17 20 11 32 11 C44 11 52 17 52 26 z"/>
-      <rect class="chest__metal" x="14" y="20" width="5" height="12"/>
-      <rect class="chest__metal" x="45" y="20" width="5" height="12"/>
-      <rect class="chest__metal" x="6" y="27" width="52" height="5" rx="1"/>
-    </g>
-
-    <!-- lock plate stays on the base -->
-    <rect class="chest__metal" x="27" y="29" width="10" height="11" rx="2"/>
-    <circle class="chest__keyhole" cx="32" cy="34" r="1.8"/>
+  return `<svg class="chest chest--${cat}" viewBox="0 0 64 64" role="img" aria-label="Schatztruhe">
+    ${CHEST_ART[cat](spark)}
   </svg>`;
 }
 
@@ -380,7 +475,7 @@ function chestCard(chest) {
   const tier = CATEGORIES[cat];
 
   return `<article class="chest-card" data-cat="${cat}" data-chest-id="${chest.id}">
-    <div class="chest-card__icon" aria-hidden="true">${chestSvg()}</div>
+    <div class="chest-card__icon" aria-hidden="true">${chestSvg(cat)}</div>
     <div class="chest-card__info">
       <h3 class="chest-card__name">${esc(chest.name)}</h3>
       <span class="tier tier--${cat}">
@@ -882,8 +977,10 @@ async function openChest(id) {
 }
 
 function showChestReveal(chest, newLevel) {
-  // The reveal chest wears the tier's colours, matching the card just opened.
-  $('chestRevealIcon').dataset.cat = CATEGORIES[chest.category] ? chest.category : DEFAULT_CATEGORY;
+  // Draw the tier's own chest, so the reveal shows the same one just opened.
+  const cat = CATEGORIES[chest.category] ? chest.category : DEFAULT_CATEGORY;
+  $('chestRevealIcon').dataset.cat = cat;
+  $('chestRevealIcon').innerHTML = chestSvg(cat, { sparkles: true });
   $('chestRevealName').textContent = chest.name;
   $('chestRevealExp').textContent = `+${chest.exp_reward} EXP`;
   $('chestRevealTokens').textContent = `+${chest.token_reward} ◆`;
@@ -1082,7 +1179,6 @@ $('shopForm').addEventListener('submit', (event) => {
 
 function start() {
   $('version').textContent = `v${APP_VERSION}`;
-  $('chestRevealIcon').innerHTML = chestSvg({ sparkles: true });
   document.body.dataset.screen = 'role';
   pickTier(DEFAULT_CATEGORY, { prefillRewards: true });
 
