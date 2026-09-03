@@ -26,6 +26,20 @@
   --surface-raised: #F3EFE8;
   --surface-border: rgba(30, 27, 46, 0.08);
 
+  /* Quest tiers, ordered common → rarest */
+  --cat-basic: #9A6B45;
+  --cat-basic-bg: #F2E6DA;
+  --cat-basic-ink: #6B4526;
+  --cat-special: #3B82F6;
+  --cat-special-bg: #DBEAFE;
+  --cat-special-ink: #1D4ED8;
+  --cat-rapid: #EF4444;
+  --cat-rapid-bg: #FEE2E2;
+  --cat-rapid-ink: #B91C1C;
+  --cat-divine: #C99A2E;
+  --cat-divine-bg: #FBF0D2;
+  --cat-divine-ink: #8A6410;
+
   --fur: #6B7280;
   --fur-light: #9CA3AF;
   --fur-dark: #4B5563;
@@ -54,6 +68,19 @@
     --mint-deep: #9DF5CE;
     --rose-soft: #6B1D30;
 
+    --cat-basic: #C08E62;
+    --cat-basic-bg: #3A2A1D;
+    --cat-basic-ink: #E4C3A2;
+    --cat-special: #60A5FA;
+    --cat-special-bg: #1B2E4D;
+    --cat-special-ink: #A9CDFB;
+    --cat-rapid: #F87171;
+    --cat-rapid-bg: #4A1D1D;
+    --cat-rapid-ink: #FBB4B4;
+    --cat-divine: #E8BC55;
+    --cat-divine-bg: #443415;
+    --cat-divine-ink: #F5DA9C;
+
     --ink: #F0ECF9;
     --ink-secondary: #B8B3CC;
     --ink-muted: #7A7590;
@@ -75,6 +102,19 @@
   --mint-soft: #1A5C40;
   --mint-deep: #9DF5CE;
   --rose-soft: #6B1D30;
+
+  --cat-basic: #C08E62;
+  --cat-basic-bg: #3A2A1D;
+  --cat-basic-ink: #E4C3A2;
+  --cat-special: #60A5FA;
+  --cat-special-bg: #1B2E4D;
+  --cat-special-ink: #A9CDFB;
+  --cat-rapid: #F87171;
+  --cat-rapid-bg: #4A1D1D;
+  --cat-rapid-ink: #FBB4B4;
+  --cat-divine: #E8BC55;
+  --cat-divine-bg: #443415;
+  --cat-divine-ink: #F5DA9C;
 
   --ink: #F0ECF9;
   --ink-secondary: #B8B3CC;
@@ -426,6 +466,108 @@ body[data-screen="gm"] .version {
   box-shadow: var(--shadow-sm);
 }
 .quest-card--muted { opacity: 0.55; }
+
+/* The tier rail is the card's rarity at a glance. */
+.quest-card[data-cat] { border-left: 4px solid var(--tier); }
+.quest-card[data-cat="basic"] { --tier: var(--cat-basic); }
+.quest-card[data-cat="special"] { --tier: var(--cat-special); }
+.quest-card[data-cat="rapid_fire"] { --tier: var(--cat-rapid); }
+.quest-card[data-cat="divine"] { --tier: var(--cat-divine); }
+
+/* Divine is the one tier that earns extra weight. */
+.quest-card[data-cat="divine"]:not(.quest-card--muted) {
+  border-color: var(--cat-divine);
+  background:
+    linear-gradient(105deg, var(--cat-divine-bg) 0%, transparent 62%),
+    var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--tier-bg);
+  color: var(--tier-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tier--basic { --tier-bg: var(--cat-basic-bg); --tier-ink: var(--cat-basic-ink); }
+.tier--special { --tier-bg: var(--cat-special-bg); --tier-ink: var(--cat-special-ink); }
+.tier--rapid_fire { --tier-bg: var(--cat-rapid-bg); --tier-ink: var(--cat-rapid-ink); }
+.tier--divine { --tier-bg: var(--cat-divine-bg); --tier-ink: var(--cat-divine-ink); }
+
+.tier__icon { font-size: 11px; }
+
+/* Urgency deserves motion; the other tiers stay still. */
+.tier--rapid_fire .tier__icon { animation: flicker 1.4s ease-in-out infinite; }
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.18) rotate(3deg); }
+}
+
+.quest-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.repeat-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+/* --- Tier picker (quest form) -------------------------------------------- */
+.tier-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.tier-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 2px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  text-align: left;
+}
+.tier-option:active { transform: scale(0.96); }
+.tier-option__icon { font-size: 18px; flex-shrink: 0; }
+.tier-option__label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+}
+.tier-option.is-selected { border-color: var(--tier); background: var(--tier-bg); }
+.tier-option.is-selected .tier-option__label { color: var(--tier-ink); }
+.tier-option[data-cat="basic"] { --tier: var(--cat-basic); --tier-bg: var(--cat-basic-bg); --tier-ink: var(--cat-basic-ink); }
+.tier-option[data-cat="special"] { --tier: var(--cat-special); --tier-bg: var(--cat-special-bg); --tier-ink: var(--cat-special-ink); }
+.tier-option[data-cat="rapid_fire"] { --tier: var(--cat-rapid); --tier-bg: var(--cat-rapid-bg); --tier-ink: var(--cat-rapid-ink); }
+.tier-option[data-cat="divine"] { --tier: var(--cat-divine); --tier-bg: var(--cat-divine-bg); --tier-ink: var(--cat-divine-ink); }
+
+.field__hint {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.free-tag {
+  background: var(--mint);
+  box-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);
+}
 .quest-card__head {
   display: flex;
   align-items: flex-start;

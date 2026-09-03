@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -19,6 +19,34 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const ROLE_KEY = 'cq_role';
 const HISTORY_LIMIT = 50;
 const DEFAULT_ICON = '🎁';
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Quest tiers, from everyday to rarest. `rank` orders the active list so
+ * urgent work sits on top; `exp`/`tokens` only prefill the form, the game
+ * master can always override them.
+ */
+const CATEGORIES = {
+  rapid_fire: {
+    label: 'Rapid Fire', icon: '🔥', rank: 0, exp: 40, tokens: 10,
+    hint: 'Dringend — sollte heute noch erledigt werden.',
+  },
+  divine: {
+    label: 'Divine', icon: '⭐', rank: 1, exp: 150, tokens: 40,
+    hint: 'Die härteste Stufe. Große Aufgabe, große Belohnung.',
+  },
+  special: {
+    label: 'Special', icon: '💎', rank: 2, exp: 60, tokens: 15,
+    hint: 'Seltener als Basic — etwas, das nicht jede Woche ansteht.',
+  },
+  basic: {
+    label: 'Basic', icon: '🪵', rank: 3, exp: 25, tokens: 5,
+    hint: 'Alltagsaufgabe. Taucht eine Woche nach dem Abhaken wieder auf.',
+  },
+};
+
+const DEFAULT_CATEGORY = 'basic';
+const categoryOf = (quest) => CATEGORIES[quest.category] ? quest.category : DEFAULT_CATEGORY;
 
 /* --- State --------------------------------------------------------------- */
 
@@ -29,6 +57,9 @@ const state = {
   quests: [],
   shopItems: [],
   history: [],
+  // Quest form: which tier is picked, and the quest being edited (null = new).
+  formCategory: DEFAULT_CATEGORY,
+  editingQuestId: null,
 };
 
 /** Supabase client, or null when the library failed to load. */
@@ -123,8 +154,25 @@ function reportError(error, fallback) {
   showToast(error?.message ? `Fehler: ${error.message}` : fallback, 'error');
 }
 
+/**
+ * Put recurring quests back on the board once their week is up. The filter
+ * does the deciding, so both devices can run this and the second one is a
+ * no-op rather than a double reset.
+ */
+async function reviveDueQuests() {
+  if (!sb) return;
+  const { error } = await sb.from('quests')
+    .update({ status: 'active', completed_at: null, resets_at: null })
+    .eq('status', 'done')
+    .not('resets_at', 'is', null)
+    .lte('resets_at', new Date().toISOString());
+
+  if (error) console.error('Wiederkehrende Quests konnten nicht erneuert werden:', error);
+}
+
 async function loadAll() {
   if (!sb) return;
+  await reviveDueQuests();
 
   const [stats, quests, shop, history] = await Promise.all([
     sb.from('player_stats').select('*').eq('id', 1).maybeSingle(),
@@ -262,6 +310,8 @@ function renderRaccoon() {
 function questCard(quest, { forGameMaster }) {
   const labels = { active: 'Aktiv', pending_confirm: 'Warten', done: 'Fertig' };
   const modifier = { active: 'active', pending_confirm: 'pending', done: 'done' }[quest.status];
+  const cat = categoryOf(quest);
+  const tier = CATEGORIES[cat];
 
   let actions = '';
   if (forGameMaster && quest.status === 'pending_confirm') {
@@ -271,6 +321,7 @@ function questCard(quest, { forGameMaster }) {
     </div>`;
   } else if (forGameMaster && quest.status === 'active') {
     actions = `<div class="action-row">
+      <button class="btn btn--sm btn--neutral" data-action="edit-quest" data-id="${quest.id}">Bearbeiten</button>
       <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
     </div>`;
   } else if (!forGameMaster && quest.status === 'active') {
@@ -284,10 +335,22 @@ function questCard(quest, { forGameMaster }) {
     <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${quest.token_reward} Tokens</span>
   </div>`;
 
-  return `<article class="quest-card${quest.status === 'done' ? ' quest-card--muted' : ''}">
+  // A finished recurring quest says when it comes back, so it does not
+  // read as simply gone.
+  const repeat = quest.status === 'done' && quest.resets_at
+    ? `<span class="repeat-note">↻ ${formatReturn(quest.resets_at)}</span>`
+    : '';
+
+  return `<article class="quest-card${quest.status === 'done' ? ' quest-card--muted' : ''}" data-cat="${cat}">
     <div class="quest-card__head">
       <h3 class="quest-card__name">${esc(quest.name)}</h3>
       <span class="badge badge--${modifier}">${labels[quest.status]}</span>
+    </div>
+    <div class="quest-card__meta">
+      <span class="tier tier--${cat}">
+        <span class="tier__icon" aria-hidden="true">${tier.icon}</span>${tier.label}
+      </span>
+      ${repeat}
     </div>
     ${quest.description ? `<p class="quest-card__desc">${esc(quest.description)}</p>` : ''}
     ${rewards}
@@ -295,9 +358,24 @@ function questCard(quest, { forGameMaster }) {
   </article>`;
 }
 
+/** "in 3 Tagen" / "bald wieder" for a recurring quest's return date. */
+function formatReturn(iso) {
+  const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  if (Number.isNaN(days)) return 'kehrt wieder';
+  if (days <= 0) return 'gleich wieder da';
+  if (days === 1) return 'morgen wieder';
+  return `in ${days} Tagen wieder`;
+}
+
+/** Rarest and most urgent first, then newest. */
+function byTier(a, b) {
+  const diff = CATEGORIES[categoryOf(a)].rank - CATEGORIES[categoryOf(b)].rank;
+  return diff !== 0 ? diff : String(b.created_at).localeCompare(String(a.created_at));
+}
+
 function renderQuests() {
-  const active = state.quests.filter((q) => q.status === 'active');
-  const pending = state.quests.filter((q) => q.status === 'pending_confirm');
+  const active = state.quests.filter((q) => q.status === 'active').sort(byTier);
+  const pending = state.quests.filter((q) => q.status === 'pending_confirm').sort(byTier);
   const done = state.quests.filter((q) => q.status === 'done');
 
   // Player
@@ -350,6 +428,7 @@ function renderShop() {
     playerEl.innerHTML = emptyState('🛍️', 'Der Shop ist noch leer. Dein Game Master füllt ihn bald!');
   } else {
     playerEl.innerHTML = '<h2 class="section-title">Wifey Shop</h2>' + state.shopItems.map((item) => {
+      const free = item.price === 0;
       const affordable = state.stats.tokens >= item.price;
       return `<article class="shop-item">
         <div class="shop-item__icon" aria-hidden="true">${esc(item.icon || DEFAULT_ICON)}</div>
@@ -357,8 +436,9 @@ function renderShop() {
           <h3 class="shop-item__name">${esc(item.name)}</h3>
           ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
         </div>
-        <button class="buy-btn" data-action="buy-item" data-id="${item.id}"${affordable ? '' : ' disabled'}>
-          ◆ ${item.price}
+        <button class="buy-btn${free ? ' free-tag' : ''}" data-action="buy-item"
+                data-id="${item.id}"${affordable ? '' : ' disabled'}>
+          ${free ? 'Gratis' : `◆ ${item.price}`}
         </button>
       </article>`;
     }).join('');
@@ -378,7 +458,7 @@ function renderShop() {
           <button class="btn btn--sm btn--danger" data-action="delete-item" data-id="${item.id}">Entfernen</button>
         </div>
       </div>
-      <span class="token-count">◆ ${item.price}</span>
+      <span class="token-count">${item.price === 0 ? 'Gratis' : `◆ ${item.price}`}</span>
     </article>`).join('');
   }
 }
@@ -468,25 +548,64 @@ function closeModal(id) { $(id).classList.remove('is-open'); }
 
 /* --- Actions ------------------------------------------------------------- */
 
-async function createQuest(form) {
+/** Highlight a tier and, for a new quest, prefill its suggested rewards. */
+function pickTier(category, { prefillRewards }) {
+  state.formCategory = category;
+
+  document.querySelectorAll('.tier-option').forEach((btn) => {
+    btn.classList.toggle('is-selected', btn.dataset.cat === category);
+  });
+  $('tierHint').textContent = CATEGORIES[category].hint;
+
+  if (prefillRewards) {
+    $('questExp').value = CATEGORIES[category].exp;
+    $('questTokens').value = CATEGORIES[category].tokens;
+  }
+}
+
+function openQuestForm(quest) {
+  state.editingQuestId = quest?.id ?? null;
+
+  $('questModalTitle').textContent = quest ? 'Quest bearbeiten' : 'Neue Quest';
+  $('questSubmit').textContent = quest ? 'Änderungen speichern' : 'Quest erstellen';
+  $('questName').value = quest?.name ?? '';
+  $('questDesc').value = quest?.description ?? '';
+  $('questExp').value = quest?.exp_reward ?? CATEGORIES[DEFAULT_CATEGORY].exp;
+  $('questTokens').value = quest?.token_reward ?? CATEGORIES[DEFAULT_CATEGORY].tokens;
+
+  // Editing keeps the rewards already agreed; a new quest gets the tier's.
+  pickTier(quest ? categoryOf(quest) : DEFAULT_CATEGORY, { prefillRewards: false });
+  openModal('questModal');
+}
+
+async function saveQuest(form) {
   if (!requireDb()) return;
   const data = new FormData(form);
   const name = String(data.get('name')).trim();
   if (!name) { showToast('Bitte einen Namen eingeben', 'error'); return; }
 
-  const { error } = await sb.from('quests').insert({
+  const fields = {
     name,
     description: String(data.get('description')).trim(),
     exp_reward: Math.max(0, Number(data.get('exp')) || 0),
     token_reward: Math.max(0, Number(data.get('tokens')) || 0),
-    status: 'active',
-  });
+    category: state.formCategory,
+  };
 
-  if (error) { reportError(error, 'Quest konnte nicht erstellt werden'); return; }
+  const editingId = state.editingQuestId;
+  const { error } = editingId
+    ? await sb.from('quests').update(fields).eq('id', editingId)
+    : await sb.from('quests').insert({ ...fields, status: 'active' });
+
+  if (error) {
+    reportError(error, editingId ? 'Quest konnte nicht gespeichert werden' : 'Quest konnte nicht erstellt werden');
+    return;
+  }
 
   form.reset();
+  state.editingQuestId = null;
   closeModal('questModal');
-  showToast('Quest erstellt!', 'success');
+  showToast(editingId ? 'Quest gespeichert!' : 'Quest erstellt!', 'success');
 }
 
 async function createShopItem(form) {
@@ -499,7 +618,7 @@ async function createShopItem(form) {
     name,
     description: String(data.get('description')).trim(),
     icon: String(data.get('icon')).trim() || DEFAULT_ICON,
-    price: Math.max(1, Number(data.get('price')) || 1),
+    price: Math.max(0, Number(data.get('price')) || 0),
   });
 
   if (error) { reportError(error, 'Artikel konnte nicht erstellt werden'); return; }
@@ -533,8 +652,14 @@ async function confirmQuest(id) {
     return;
   }
 
+  // Basic quests are the weekly chores: schedule their return as they close.
+  const recurring = categoryOf(quest) === 'basic';
   const { data: claimed, error: claimError } = await sb.from('quests')
-    .update({ status: 'done', completed_at: new Date().toISOString() })
+    .update({
+      status: 'done',
+      completed_at: new Date().toISOString(),
+      resets_at: recurring ? new Date(Date.now() + WEEK_MS).toISOString() : null,
+    })
     .eq('id', id).eq('status', 'pending_confirm')
     .select();
 
@@ -600,18 +725,22 @@ async function buyItem(id) {
     return;
   }
 
-  const remaining = state.stats.tokens - item.price;
-  // gte() makes the balance check part of the write, so two quick taps
-  // cannot spend the same tokens twice.
-  const { data, error } = await sb.from('player_stats')
-    .update({ tokens: remaining, updated_at: new Date().toISOString() })
-    .eq('id', 1).gte('tokens', item.price)
-    .select();
+  // A free item costs nothing, so there is no balance to guard — skip
+  // straight to logging it.
+  if (item.price > 0) {
+    const remaining = state.stats.tokens - item.price;
+    // gte() makes the balance check part of the write, so two quick taps
+    // cannot spend the same tokens twice.
+    const { data, error } = await sb.from('player_stats')
+      .update({ tokens: remaining, updated_at: new Date().toISOString() })
+      .eq('id', 1).gte('tokens', item.price)
+      .select();
 
-  if (error) { reportError(error, 'Kauf fehlgeschlagen'); return; }
-  if (!data || data.length === 0) {
-    showToast('Nicht genug Tokens!', 'error');
-    return;
+    if (error) { reportError(error, 'Kauf fehlgeschlagen'); return; }
+    if (!data || data.length === 0) {
+      showToast('Nicht genug Tokens!', 'error');
+      return;
+    }
   }
 
   await sb.from('history').insert({
@@ -635,7 +764,15 @@ const actions = {
   'switch-role': () => clearRole(),
   'player-tab': (el) => setPlayerView(el.dataset.view),
   'gm-tab': (el) => setGmTab(el.dataset.tab),
-  'open-create': () => openModal(state.gmTab === 'shop' ? 'shopModal' : 'questModal'),
+  'open-create': () => {
+    if (state.gmTab === 'shop') { openModal('shopModal'); return; }
+    openQuestForm(null);
+  },
+  'pick-tier': (el) => pickTier(el.dataset.cat, { prefillRewards: !state.editingQuestId }),
+  'edit-quest': (el) => {
+    const quest = state.quests.find((q) => q.id === el.dataset.id);
+    if (quest) openQuestForm(quest);
+  },
   'dismiss-levelup': () => $('levelup').classList.remove('is-open'),
   'submit-quest': (el) => submitQuest(el.dataset.id),
   'confirm-quest': (el) => confirmQuest(el.dataset.id),
@@ -661,7 +798,7 @@ document.querySelectorAll('.modal').forEach((modal) => {
 
 $('questForm').addEventListener('submit', (event) => {
   event.preventDefault();
-  createQuest(event.currentTarget);
+  saveQuest(event.currentTarget);
 });
 
 $('shopForm').addEventListener('submit', (event) => {
@@ -674,6 +811,7 @@ $('shopForm').addEventListener('submit', (event) => {
 function start() {
   $('version').textContent = `v${APP_VERSION}`;
   document.body.dataset.screen = 'role';
+  pickTier(DEFAULT_CATEGORY, { prefillRewards: true });
 
   if (window.supabase?.createClient) {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.0.0">
+<link rel="stylesheet" href="styles.css?v=1.1.0">
 </head>
 <body>
 
@@ -249,6 +249,29 @@
     <h2 class="sheet__title" id="questModalTitle">Neue Quest</h2>
 
     <div class="field">
+      <span class="field__label">Kategorie</span>
+      <div class="tier-picker" id="tierPicker">
+        <button type="button" class="tier-option is-selected" data-action="pick-tier" data-cat="basic">
+          <span class="tier-option__icon" aria-hidden="true">🪵</span>
+          <span class="tier-option__label">Basic</span>
+        </button>
+        <button type="button" class="tier-option" data-action="pick-tier" data-cat="rapid_fire">
+          <span class="tier-option__icon" aria-hidden="true">🔥</span>
+          <span class="tier-option__label">Rapid Fire</span>
+        </button>
+        <button type="button" class="tier-option" data-action="pick-tier" data-cat="special">
+          <span class="tier-option__icon" aria-hidden="true">💎</span>
+          <span class="tier-option__label">Special</span>
+        </button>
+        <button type="button" class="tier-option" data-action="pick-tier" data-cat="divine">
+          <span class="tier-option__icon" aria-hidden="true">⭐</span>
+          <span class="tier-option__label">Divine</span>
+        </button>
+      </div>
+      <p class="field__hint" id="tierHint"></p>
+    </div>
+
+    <div class="field">
       <label class="field__label" for="questName">Quest Name</label>
       <input class="field__input" id="questName" name="name" placeholder="z.B. Küche sauber machen"
              maxlength="80" required autocomplete="off">
@@ -273,7 +296,7 @@
       </div>
     </div>
 
-    <button class="submit-btn submit-btn--rose" type="submit">Quest erstellen</button>
+    <button class="submit-btn submit-btn--rose" type="submit" id="questSubmit">Quest erstellen</button>
   </form>
 </div>
 
@@ -301,10 +324,11 @@
         <label class="field__label" for="itemIcon">Icon</label>
         <input class="field__input" id="itemIcon" name="icon" value="🎁" maxlength="4" autocomplete="off">
       </div>
+      <!-- 0 is allowed: a giveaway the player can just claim. -->
       <div class="field">
         <label class="field__label" for="itemPrice">◆ Preis</label>
         <input class="field__input" id="itemPrice" name="price" type="number"
-               min="1" max="9999" step="1" value="10" inputmode="numeric" required>
+               min="0" max="9999" step="1" value="10" inputmode="numeric" required>
       </div>
     </div>
 
@@ -314,6 +338,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.0.0"></script>
+<script src="app.js?v=1.1.0"></script>
 </body>
 </html>
