@@ -6,6 +6,13 @@
    ========================================================================== */
 'use strict';
 
+/**
+ * Bump on every deploy, and change the ?v= on the styles.css and app.js
+ * tags in index.html to match — that pair is what forces phones to drop
+ * the cached copies instead of quietly running the old build.
+ */
+const APP_VERSION = '1.0.0';
+
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
 
@@ -415,6 +422,8 @@ function setRole(role) {
   $('screenRole').hidden = true;
   $('screenPlayer').hidden = role !== 'player';
   $('screenGm').hidden = role !== 'gm';
+  // Lets the version marker dodge the bottom bar / action button.
+  document.body.dataset.screen = role;
 
   // Always open the QuestBook on the quest list — that is where pending
   // confirmations show up, and they are the reason to open it at all.
@@ -429,6 +438,7 @@ function clearRole() {
   $('screenPlayer').hidden = true;
   $('screenGm').hidden = true;
   $('screenRole').hidden = false;
+  document.body.dataset.screen = 'role';
 }
 
 function setPlayerView(viewId) {
@@ -662,6 +672,9 @@ $('shopForm').addEventListener('submit', (event) => {
 /* --- Boot ---------------------------------------------------------------- */
 
 function start() {
+  $('version').textContent = `v${APP_VERSION}`;
+  document.body.dataset.screen = 'role';
+
   if (window.supabase?.createClient) {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {

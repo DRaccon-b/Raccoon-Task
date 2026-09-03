@@ -121,6 +121,34 @@ button { font: inherit; color: inherit; }
 }
 .screen[hidden] { display: none; }
 
+/* --- Version marker ------------------------------------------------------
+   Sits in the bottom-right corner and steps over whatever the current
+   screen puts there: the tab bar on the player side, the + button on the
+   game master side. */
+.version {
+  position: fixed;
+  right: 10px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  z-index: 300;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--ink-muted);
+  opacity: 0.55;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+body[data-screen="player"] .version {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+}
+body[data-screen="gm"] .version {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+}
+
+@media (max-width: 430px) {
+  body[data-screen="gm"] .version { right: 26px; }
+}
+
 /* --- Connection banner --------------------------------------------------- */
 .banner {
   display: none;
