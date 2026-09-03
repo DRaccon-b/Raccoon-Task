@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -61,6 +61,7 @@ const state = {
   // Quest form: which tier is picked, and the quest being edited (null = new).
   formCategory: DEFAULT_CATEGORY,
   editingQuestId: null,
+  editingItemId: null,   // shop item being edited (null = new)
 };
 
 /** A level-up queued behind the chest-reveal overlay, shown once it closes. */
@@ -330,13 +331,56 @@ function renderRaccoon() {
   $('raccoonStatus').textContent = status;
 }
 
+/**
+ * Treasure chest artwork. The lid is its own group so it can swing open on
+ * the reveal; every colour comes from a CSS variable so each tier gets its
+ * own chest. `sparkles` adds the burst that only the reveal needs.
+ */
+function chestSvg({ sparkles = false } = {}) {
+  const spark = sparkles ? `
+    <g class="chest__sparks">
+      <circle class="chest__spark" cx="20" cy="26" r="2"/>
+      <circle class="chest__spark" cx="32" cy="22" r="2.6"/>
+      <circle class="chest__spark" cx="44" cy="26" r="2"/>
+      <circle class="chest__spark" cx="26" cy="24" r="1.6"/>
+      <circle class="chest__spark" cx="39" cy="24" r="1.6"/>
+    </g>` : '';
+
+  return `<svg class="chest" viewBox="0 0 64 64" role="img" aria-label="Schatztruhe">
+    <!-- interior and glow, uncovered as the lid lifts -->
+    <rect class="chest__inside" x="9" y="20" width="46" height="15" rx="2"/>
+    <ellipse class="chest__glow" cx="32" cy="29" rx="19" ry="8"/>
+    ${spark}
+
+    <!-- base -->
+    <path class="chest__wood" d="M6 34 h52 v13 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <path class="chest__wood-dark" d="M6 45 h52 v2 a4 4 0 0 1 -4 4 h-44 a4 4 0 0 1 -4 -4 z"/>
+    <rect class="chest__metal" x="6" y="31" width="52" height="5" rx="1"/>
+    <rect class="chest__metal" x="14" y="34" width="5" height="17"/>
+    <rect class="chest__metal" x="45" y="34" width="5" height="17"/>
+
+    <!-- lid: pivots on the seam when the chest opens -->
+    <g class="chest__lid">
+      <path class="chest__wood" d="M6 32 v-6 C6 14 17 6 32 6 C47 6 58 14 58 26 v6 z"/>
+      <path class="chest__wood-light" d="M12 26 C12 17 20 11 32 11 C44 11 52 17 52 26 z"/>
+      <rect class="chest__metal" x="14" y="20" width="5" height="12"/>
+      <rect class="chest__metal" x="45" y="20" width="5" height="12"/>
+      <rect class="chest__metal" x="6" y="27" width="52" height="5" rx="1"/>
+    </g>
+
+    <!-- lock plate stays on the base -->
+    <rect class="chest__metal" x="27" y="29" width="10" height="11" rx="2"/>
+    <circle class="chest__keyhole" cx="32" cy="34" r="1.8"/>
+  </svg>`;
+}
+
 /** One unopened reward, shown on the player's home screen. */
 function chestCard(chest) {
   const cat = CATEGORIES[chest.category] ? chest.category : DEFAULT_CATEGORY;
   const tier = CATEGORIES[cat];
 
   return `<article class="chest-card" data-cat="${cat}" data-chest-id="${chest.id}">
-    <div class="chest-card__icon" aria-hidden="true">🎁</div>
+    <div class="chest-card__icon" aria-hidden="true">${chestSvg()}</div>
     <div class="chest-card__info">
       <h3 class="chest-card__name">${esc(chest.name)}</h3>
       <span class="tier tier--${cat}">
@@ -362,7 +406,7 @@ function renderChests() {
   tray.hidden = false;
   const title = state.chests.length === 1 ? 'Eine Truhe wartet' : `${state.chests.length} Truhen warten`;
   tray.innerHTML = `
-    <h2 class="chest-tray__title">🎁 ${title}</h2>
+    <h2 class="chest-tray__title">${title}</h2>
     <div class="chest-list">${state.chests.map(chestCard).join('')}</div>
   `;
 }
@@ -382,6 +426,12 @@ function questCard(quest, { forGameMaster }) {
   } else if (forGameMaster && quest.status === 'active') {
     actions = `<div class="action-row">
       <button class="btn btn--sm btn--neutral" data-action="edit-quest" data-id="${quest.id}">Bearbeiten</button>
+      <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
+    </div>`;
+  } else if (forGameMaster && quest.status === 'done') {
+    // A finished quest doubles as a template for the next round.
+    actions = `<div class="action-row">
+      <button class="btn btn--sm btn--neutral" data-action="repost-quest" data-id="${quest.id}">Erneut stellen</button>
       <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
     </div>`;
   } else if (!forGameMaster && quest.status === 'active') {
@@ -515,6 +565,7 @@ function renderShop() {
         <h3 class="shop-item__name">${esc(item.name)}</h3>
         ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
         <div class="action-row">
+          <button class="btn btn--sm btn--neutral" data-action="edit-item" data-id="${item.id}">Bearbeiten</button>
           <button class="btn btn--sm btn--danger" data-action="delete-item" data-id="${item.id}">Entfernen</button>
         </div>
       </div>
@@ -627,17 +678,26 @@ function pickTier(category, { prefillRewards }) {
   }
 }
 
-function openQuestForm(quest) {
-  state.editingQuestId = quest?.id ?? null;
+/**
+ * Open the quest sheet. With no quest it creates one; with a quest it edits
+ * that quest, unless `asTemplate` — then the quest's values only seed a
+ * brand new one, leaving the finished original untouched in the history.
+ */
+function openQuestForm(quest, { asTemplate = false } = {}) {
+  state.editingQuestId = asTemplate ? null : (quest?.id ?? null);
+  const editing = state.editingQuestId != null;
 
-  $('questModalTitle').textContent = quest ? 'Quest bearbeiten' : 'Neue Quest';
-  $('questSubmit').textContent = quest ? 'Änderungen speichern' : 'Quest erstellen';
+  $('questModalTitle').textContent =
+    editing ? 'Quest bearbeiten' : asTemplate ? 'Quest erneut stellen' : 'Neue Quest';
+  $('questSubmit').textContent =
+    editing ? 'Änderungen speichern' : asTemplate ? 'Erneut stellen' : 'Quest erstellen';
+
   $('questName').value = quest?.name ?? '';
   $('questDesc').value = quest?.description ?? '';
   $('questExp').value = quest?.exp_reward ?? CATEGORIES[DEFAULT_CATEGORY].exp;
   $('questTokens').value = quest?.token_reward ?? CATEGORIES[DEFAULT_CATEGORY].tokens;
 
-  // Editing keeps the rewards already agreed; a new quest gets the tier's.
+  // Editing and reposting both keep the rewards already agreed.
   pickTier(quest ? categoryOf(quest) : DEFAULT_CATEGORY, { prefillRewards: false });
   openModal('questModal');
 }
@@ -672,24 +732,47 @@ async function saveQuest(form) {
   showToast(editingId ? 'Quest gespeichert!' : 'Quest erstellt!', 'success');
 }
 
-async function createShopItem(form) {
+/** Open the shop sheet, empty for a new item or filled to edit one. */
+function openShopForm(item) {
+  state.editingItemId = item?.id ?? null;
+
+  $('shopModalTitle').textContent = item ? 'Artikel bearbeiten' : 'Neuer Shop-Artikel';
+  $('shopSubmit').textContent = item ? 'Änderungen speichern' : 'Artikel erstellen';
+  $('itemName').value = item?.name ?? '';
+  $('itemDesc').value = item?.description ?? '';
+  $('itemIcon').value = item?.icon ?? DEFAULT_ICON;
+  $('itemPrice').value = item?.price ?? 10;
+
+  openModal('shopModal');
+}
+
+async function saveShopItem(form) {
   if (!requireDb()) return;
   const data = new FormData(form);
   const name = String(data.get('name')).trim();
   if (!name) { showToast('Bitte einen Namen eingeben', 'error'); return; }
 
-  const { error } = await sb.from('shop_items').insert({
+  const fields = {
     name,
     description: String(data.get('description')).trim(),
     icon: String(data.get('icon')).trim() || DEFAULT_ICON,
     price: Math.max(0, Number(data.get('price')) || 0),
-  });
+  };
 
-  if (error) { reportError(error, 'Artikel konnte nicht erstellt werden'); return; }
+  const editingId = state.editingItemId;
+  const { error } = editingId
+    ? await sb.from('shop_items').update(fields).eq('id', editingId)
+    : await sb.from('shop_items').insert(fields);
+
+  if (error) {
+    reportError(error, editingId ? 'Artikel konnte nicht gespeichert werden' : 'Artikel konnte nicht erstellt werden');
+    return;
+  }
 
   form.reset();
+  state.editingItemId = null;
   closeModal('shopModal');
-  showToast('Artikel hinzugefügt!', 'success');
+  showToast(editingId ? 'Artikel gespeichert!' : 'Artikel hinzugefügt!', 'success');
 }
 
 async function submitQuest(id) {
@@ -799,6 +882,8 @@ async function openChest(id) {
 }
 
 function showChestReveal(chest, newLevel) {
+  // The reveal chest wears the tier's colours, matching the card just opened.
+  $('chestRevealIcon').dataset.cat = CATEGORIES[chest.category] ? chest.category : DEFAULT_CATEGORY;
   $('chestRevealName').textContent = chest.name;
   $('chestRevealExp').textContent = `+${chest.exp_reward} EXP`;
   $('chestRevealTokens').textContent = `+${chest.token_reward} ◆`;
@@ -886,13 +971,21 @@ const actions = {
   'player-tab': (el) => setPlayerView(el.dataset.view),
   'gm-tab': (el) => setGmTab(el.dataset.tab),
   'open-create': () => {
-    if (state.gmTab === 'shop') { openModal('shopModal'); return; }
+    if (state.gmTab === 'shop') { openShopForm(null); return; }
     openQuestForm(null);
   },
   'pick-tier': (el) => pickTier(el.dataset.cat, { prefillRewards: !state.editingQuestId }),
   'edit-quest': (el) => {
     const quest = state.quests.find((q) => q.id === el.dataset.id);
     if (quest) openQuestForm(quest);
+  },
+  'repost-quest': (el) => {
+    const quest = state.quests.find((q) => q.id === el.dataset.id);
+    if (quest) openQuestForm(quest, { asTemplate: true });
+  },
+  'edit-item': (el) => {
+    const item = state.shopItems.find((s) => s.id === el.dataset.id);
+    if (item) openShopForm(item);
   },
   'dismiss-levelup': () => $('levelup').classList.remove('is-open'),
   'dismiss-chest-reveal': () => dismissChestReveal(),
@@ -982,13 +1075,14 @@ $('questForm').addEventListener('submit', (event) => {
 
 $('shopForm').addEventListener('submit', (event) => {
   event.preventDefault();
-  createShopItem(event.currentTarget);
+  saveShopItem(event.currentTarget);
 });
 
 /* --- Boot ---------------------------------------------------------------- */
 
 function start() {
   $('version').textContent = `v${APP_VERSION}`;
+  $('chestRevealIcon').innerHTML = chestSvg({ sparkles: true });
   document.body.dataset.screen = 'role';
   pickTier(DEFAULT_CATEGORY, { prefillRewards: true });
 

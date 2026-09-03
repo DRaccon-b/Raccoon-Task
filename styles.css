@@ -40,6 +40,14 @@
   --cat-divine-bg: #FBF0D2;
   --cat-divine-ink: #8A6410;
 
+  /* Treasure chest artwork; tiers repaint the metal below */
+  --chest-wood: #8B5A2B;
+  --chest-wood-light: #A97142;
+  --chest-wood-dark: #5E3A18;
+  --chest-metal: #D4A017;
+  --chest-inside: #2A1A0E;
+  --chest-glow: #FFD874;
+
   --fur: #6B7280;
   --fur-light: #9CA3AF;
   --fur-dark: #4B5563;
@@ -448,19 +456,51 @@ body[data-screen="gm"] .version {
 
 .chest-card__icon {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--tier-bg);
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  animation: chest-glow 1.8s ease-in-out infinite;
 }
-@keyframes chest-glow {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.08) rotate(-4deg); }
+
+/* --- Treasure chest artwork ---------------------------------------------- */
+.chest { width: 100%; height: 100%; overflow: visible; }
+.chest__wood { fill: var(--chest-wood); }
+.chest__wood-light { fill: var(--chest-wood-light); }
+.chest__wood-dark { fill: var(--chest-wood-dark); }
+.chest__metal { fill: var(--chest-metal); }
+.chest__inside { fill: var(--chest-inside); }
+.chest__keyhole { fill: var(--chest-inside); }
+.chest__glow { fill: var(--chest-glow); opacity: 0; }
+.chest__spark { fill: var(--chest-glow); opacity: 0; }
+
+/* The lid swings on the seam, so its origin is its own bottom edge. */
+.chest__lid {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Each tier gets its own chest: coloured bands, and gold wood for Divine. */
+.chest-card[data-cat="basic"], .chestreveal__icon[data-cat="basic"] { --chest-metal: #C08E62; }
+.chest-card[data-cat="special"], .chestreveal__icon[data-cat="special"] { --chest-metal: #6EA8FA; }
+.chest-card[data-cat="rapid_fire"], .chestreveal__icon[data-cat="rapid_fire"] { --chest-metal: #F87171; }
+.chest-card[data-cat="divine"], .chestreveal__icon[data-cat="divine"] {
+  --chest-wood: #B98E1E;
+  --chest-wood-light: #DCB544;
+  --chest-wood-dark: #8C6B12;
+  --chest-metal: #FFF1BE;
+}
+
+/* Waiting on the shelf: a slow rock, as if something inside wants out. */
+.chest-card .chest {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: chest-rock 2.8s ease-in-out infinite;
+}
+@keyframes chest-rock {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-3.5deg); }
+  60% { transform: rotate(3.5deg); }
 }
 
 .chest-card__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
@@ -522,7 +562,43 @@ body[data-screen="gm"] .version {
   55% { transform: scale(1.08) rotate(3deg); }
   100% { transform: scale(1) rotate(0deg); }
 }
-.chestreveal__icon { font-size: 56px; margin-bottom: 8px; }
+.chestreveal__icon {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 8px;
+}
+
+/* The lid swings back and the light spills out once the card lands. */
+.chestreveal.is-open .chest__lid {
+  animation: lid-open 0.6s 0.18s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+@keyframes lid-open {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-10px) rotate(-16deg); }
+}
+
+.chestreveal.is-open .chest__glow {
+  animation: glow-in 0.5s 0.32s ease-out forwards;
+}
+@keyframes glow-in {
+  from { opacity: 0; transform: scaleY(0.4); }
+  to { opacity: 0.85; transform: scaleY(1); }
+}
+.chestreveal.is-open .chest__glow { transform-box: fill-box; transform-origin: 50% 100%; }
+
+.chestreveal.is-open .chest__spark {
+  animation: spark-fly 0.9s 0.35s ease-out forwards;
+}
+.chestreveal.is-open .chest__spark:nth-child(2) { animation-delay: 0.42s; }
+.chestreveal.is-open .chest__spark:nth-child(3) { animation-delay: 0.5s; }
+.chestreveal.is-open .chest__spark:nth-child(4) { animation-delay: 0.46s; }
+.chestreveal.is-open .chest__spark:nth-child(5) { animation-delay: 0.56s; }
+@keyframes spark-fly {
+  0% { opacity: 0; transform: translateY(0) scale(0.4); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-22px) scale(1.1); }
+}
+.chest__spark { transform-box: fill-box; transform-origin: 50% 50%; }
 .chestreveal__title {
   font-family: var(--font-display);
   font-size: 22px;
@@ -631,7 +707,13 @@ body[data-screen="gm"] .version {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
-.quest-card--muted { opacity: 0.55; }
+/* Done quests recede without dimming their buttons — opacity on the card
+   would drag the "repost" action down with it. */
+.quest-card--muted {
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+.quest-card--muted .quest-card__name { color: var(--ink-muted); }
 
 /* The tier rail is the card's rarity at a glance. */
 .quest-card[data-cat] { border-left: 4px solid var(--tier); }
