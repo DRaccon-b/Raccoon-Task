@@ -22,6 +22,7 @@
   --ink-secondary: #4A4563;
   --ink-muted: #8E89A5;
   --parchment: #FBF8F3;
+  --parchment: #FF0000; /* TEMP-DEBUG: soll den Streifen unten sichtbar machen */
   --surface: #FFFFFF;
   --surface-raised: #F3EFE8;
   --surface-border: rgba(30, 27, 46, 0.08);
