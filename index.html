@@ -19,7 +19,7 @@
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=1.18.1">
+<link rel="stylesheet" href="styles.css?v=1.19.0">
 </head>
 <body>
 
@@ -338,8 +338,8 @@
 
         <div class="scene__dusk" aria-hidden="true"></div>
 
-        <div class="raccoon-container">
-        <svg class="raccoon-svg" viewBox="0 0 200 200" role="img" aria-label="Dein Waschbär">
+        <div class="raccoon-container" id="raccoonContainer">
+        <svg class="raccoon-svg" data-skin="default" viewBox="0 0 200 200" role="img" aria-label="Dein Waschbär">
           <!-- lands on the asphalt, so it is tinted by CSS rather than the page ground -->
           <ellipse class="raccoon-shadow" cx="100" cy="186" rx="44" ry="6"/>
 
@@ -594,7 +594,21 @@
 </div>
 
 
+<!-- ══ Kleiderschrank ═══════════════════════════════════════════════════ -->
+<!-- Opened by holding the raccoon for 2s (see app.js). Picking a skin
+     applies right away — no submit button, it's meant to be tried out. -->
+<div class="modal" id="wardrobeModal" role="dialog" aria-modal="true" aria-labelledby="wardrobeTitle">
+  <div class="sheet" id="wardrobeSheet">
+    <div class="sheet__handle"></div>
+    <h2 class="sheet__title" id="wardrobeTitle">🧥 Kleiderschrank</h2>
+    <p class="field__hint">Lange auf den Waschbären drücken öffnet dies jederzeit wieder.</p>
+    <div class="skin-picker" id="skinPicker"></div>
+    <button class="submit-btn submit-btn--rose" type="button" data-action="close-wardrobe">Fertig</button>
+  </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.18.1"></script>
+<script src="app.js?v=1.19.0"></script>
 </body>
 </html>

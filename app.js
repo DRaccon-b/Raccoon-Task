@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.18.1';
+const APP_VERSION = '1.19.0';
 
 /*
  * On the home screen, iOS usually freezes the app instead of closing it when
@@ -78,6 +78,18 @@ const RESET_PERIODS = {
   monthly: { label: 'Monatlich', short: 'monatlich', hint: 'Füllt sich am Monatsersten wieder auf.' },
 };
 
+/**
+ * Free to switch — this is a preference, not a shop purchase. The colours
+ * themselves live only in CSS ([data-skin="…"] on .raccoon-svg); this just
+ * needs the id and a label to draw the picker.
+ */
+const SKINS = {
+  default: { label: 'Silbergrau' },
+  rotbraun: { label: 'Rotbraun' },
+  mitternacht: { label: 'Mitternacht' },
+  schnee: { label: 'Schnee' },
+};
+
 const DEFAULT_PERIOD = 'never';
 
 /**
@@ -119,7 +131,7 @@ const categoryOf = (quest) => CATEGORIES[quest.category] ? quest.category : DEFA
 const state = {
   role: null,          // 'player' | 'gm' | null
   gmTab: 'quests',     // 'quests' | 'shop' | 'history'
-  stats: { level: 1, exp: 0, tokens: 0 },
+  stats: { level: 1, exp: 0, tokens: 0, skin: 'default' },
   quests: [],
   shopItems: [],
   history: [],
@@ -482,6 +494,86 @@ function renderRaccoon() {
   $('raccoonStatus').textContent = status;
   renderGait(active);
   renderSeason();
+  renderSkin();
+}
+
+/* --- Wardrobe --------------------------------------------------------------
+   A skin is a cosmetic preference, not a purchase: free to switch, applies
+   right away, no shop involved. Held here so it's set before the sheet is
+   ever opened, not only while it's visible. */
+function renderSkin() {
+  const svg = document.querySelector('.raccoon-svg');
+  if (svg) svg.dataset.skin = state.stats.skin || 'default';
+}
+
+function renderSkinPicker() {
+  const current = state.stats.skin || 'default';
+  $('skinPicker').innerHTML = Object.entries(SKINS).map(([id, skin]) => `
+    <button type="button" class="skin-option${id === current ? ' is-selected' : ''}"
+            data-action="pick-skin" data-skin="${id}">
+      <span class="skin-option__swatch" aria-hidden="true"></span>
+      <span class="skin-option__label">${skin.label}</span>
+    </button>`).join('');
+}
+
+async function pickSkin(skin) {
+  if (!SKINS[skin] || skin === state.stats.skin) return;
+  // Optimistic: it's a free cosmetic toggle, so the picker and the raccoon
+  // itself should react the instant you tap, not after a round trip.
+  state.stats.skin = skin;
+  renderSkin();
+  renderSkinPicker();
+  if (!sb) return;
+  const { error } = await sb.from('player_stats')
+    .update({ skin, updated_at: new Date().toISOString() }).eq('id', 1);
+  if (error) reportError(error, 'Skin konnte nicht gespeichert werden');
+}
+
+function openWardrobe() {
+  renderSkinPicker();
+  openModal('wardrobeModal');
+}
+
+/**
+ * Long-press (2s) on the raccoon opens the wardrobe. Pointer Events cover
+ * touch, mouse and pen in one set of handlers. Movement past a small
+ * threshold cancels it, the same way a scroll would cancel a browser's own
+ * long-press — so a drag or a scroll never accidentally opens the sheet.
+ */
+function initWardrobePress() {
+  const el = $('raccoonContainer');
+  if (!el) return;
+  const HOLD_MS = 2000;
+  const MOVE_TOLERANCE = 10;
+  let timer = null;
+  let start = null;
+
+  const cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+    start = null;
+    el.classList.remove('is-charging');
+  };
+
+  el.addEventListener('pointerdown', (event) => {
+    if (event.button != null && event.button !== 0) return; // left click / any touch only
+    start = { x: event.clientX, y: event.clientY };
+    el.classList.add('is-charging');
+    timer = setTimeout(() => {
+      cancel();
+      openWardrobe();
+    }, HOLD_MS);
+  });
+
+  el.addEventListener('pointermove', (event) => {
+    if (!start) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.hypot(dx, dy) > MOVE_TOLERANCE) cancel();
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) =>
+    el.addEventListener(type, cancel));
 }
 
 /* Only active quests set the pace: one waiting on her confirmation is off his
@@ -1855,6 +1947,8 @@ const actions = {
   'pick-role': (el) => setRole(el.dataset.role),
   'switch-role': () => clearRole(),
   'toggle-push': () => togglePush(),
+  'pick-skin': (el) => pickSkin(el.dataset.skin),
+  'close-wardrobe': () => closeModal('wardrobeModal'),
   'player-tab': (el) => setPlayerView(el.dataset.view),
   'gm-tab': (el) => setGmTab(el.dataset.tab),
   'open-create': () => {
@@ -2008,6 +2102,7 @@ function start() {
   document.addEventListener('visibilitychange', () => !document.hidden && renderSky());
 
   registerWorker().then(renderPushButton);
+  initWardrobePress();
 
   let savedRole = null;
   try { savedRole = localStorage.getItem(ROLE_KEY); } catch { /* private mode */ }

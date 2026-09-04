@@ -54,6 +54,22 @@
   --mask: #374151;
   --ear: #F9A8D4;
 
+  /* --- Skins ---------------------------------------------------------------
+     One named colour set per skin. app.js sets data-skin on .raccoon-svg
+     from player_stats.skin; that swaps --fur etc. below. The wardrobe's own
+     swatches read the same tokens, so a colour only ever lives in one place. */
+  --skin-default-fur: #6B7280; --skin-default-fur-light: #9CA3AF;
+  --skin-default-fur-dark: #4B5563; --skin-default-mask: #374151; --skin-default-ear: #F9A8D4;
+
+  --skin-rotbraun-fur: #92572E; --skin-rotbraun-fur-light: #C08552;
+  --skin-rotbraun-fur-dark: #6B3D1F; --skin-rotbraun-mask: #4A2A15; --skin-rotbraun-ear: #F4A895;
+
+  --skin-mitternacht-fur: #3B3B47; --skin-mitternacht-fur-light: #56566A;
+  --skin-mitternacht-fur-dark: #26262E; --skin-mitternacht-mask: #17171C; --skin-mitternacht-ear: #B48EAD;
+
+  --skin-schnee-fur: #F1F0EE; --skin-schnee-fur-light: #FFFFFF;
+  --skin-schnee-fur-dark: #D8D6D2; --skin-schnee-mask: #8FA3B0; --skin-schnee-ear: #FFD9E8;
+
   /* The road the raccoon walks along */
   --road: #7A7486;
   --road-edge: #9A94A6;
@@ -786,8 +802,92 @@ body[data-screen="gm"] .version {
   width: 200px;
   height: 200px;
   margin-bottom: -24px;
+  /* Long-press opens the wardrobe; suppress iOS's own press affordances
+     (image-save callout, text selection, tap highlight) so only ours shows. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 .raccoon-svg { width: 100%; height: 100%; display: block; }
+.raccoon-svg[data-skin="rotbraun"] {
+  --fur: var(--skin-rotbraun-fur); --fur-light: var(--skin-rotbraun-fur-light);
+  --fur-dark: var(--skin-rotbraun-fur-dark); --mask: var(--skin-rotbraun-mask); --ear: var(--skin-rotbraun-ear);
+}
+.raccoon-svg[data-skin="mitternacht"] {
+  --fur: var(--skin-mitternacht-fur); --fur-light: var(--skin-mitternacht-fur-light);
+  --fur-dark: var(--skin-mitternacht-fur-dark); --mask: var(--skin-mitternacht-mask); --ear: var(--skin-mitternacht-ear);
+}
+.raccoon-svg[data-skin="schnee"] {
+  --fur: var(--skin-schnee-fur); --fur-light: var(--skin-schnee-fur-light);
+  --fur-dark: var(--skin-schnee-fur-dark); --mask: var(--skin-schnee-mask); --ear: var(--skin-schnee-ear);
+}
+
+/* --- Wardrobe --------------------------------------------------------------
+   Skin picker: the same tier-picker card layout, but the icon is a plain
+   colour swatch instead of an emoji. */
+.skin-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.skin-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 2px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  text-align: left;
+}
+.skin-option:active { transform: scale(0.96); }
+.skin-option.is-selected { border-color: var(--plum); background: var(--plum-soft); }
+.skin-option__swatch {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(30, 27, 46, 0.1);
+}
+.skin-option[data-skin="default"] .skin-option__swatch { background: var(--skin-default-fur); }
+.skin-option[data-skin="rotbraun"] .skin-option__swatch { background: var(--skin-rotbraun-fur); }
+.skin-option[data-skin="mitternacht"] .skin-option__swatch { background: var(--skin-mitternacht-fur); }
+.skin-option[data-skin="schnee"] .skin-option__swatch { background: var(--skin-schnee-fur); }
+.skin-option__label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* A ring that fills in over the hold, so a long press reads as "keep
+   holding" rather than nothing happening for two silent seconds. Short by
+   default (fast to reset on release); overridden to the full 2s only while
+   actually charging, via the cascade below. */
+.raccoon-container::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 3px solid var(--rose);
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.raccoon-container.is-charging::after {
+  opacity: 0.7;
+  transform: scale(1);
+  transition: opacity 2s linear, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.raccoon-container.is-charging .raccoon-svg {
+  transform: scale(0.94);
+  transition: transform 0.3s ease-out;
+}
 
 /* The whole animal above the ground rises and dips with each step. */
 .raccoon-walker {
