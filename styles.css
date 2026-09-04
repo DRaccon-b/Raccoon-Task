@@ -433,8 +433,15 @@ body[data-screen="gm"] .version {
   overflow: hidden;       /* the layers reach past the phone; clip them here */
 
   /* The sky is painted on the scene rather than inside the backdrop, so it
-     fills the whole height however tall the phone is. */
-  background-color: var(--sea-sky);
+     fills the whole height however tall the phone is. app.js sets the two
+     colours from the time of day; the season decides the daytime blue. */
+  --sky-top: var(--sea-sky);
+  --sky-horizon: var(--sea-sky);
+  background-image: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-horizon) 100%);
+  /* Carries the sky from one minute's colour to the next, so it drifts
+     rather than stepping. Needs the @property declarations below: an
+     unregistered custom property cannot be transitioned. */
+  transition: --sky-top 45s linear, --sky-horizon 45s linear, --scene-shade 45s linear;
 
   /* One step drives everything; app.js overrides these per gait so the ground
      always keeps pace with the legs. Further away means slower, which is what
@@ -455,6 +462,76 @@ body[data-screen="gm"] .version {
   left: -70px;
   width: calc(100% + 140px);
   height: 90px;
+}
+
+/* Registering these makes them real colours to the engine, which is what
+   lets them be transitioned. A browser that does not know @property simply
+   skips the transition and steps once a minute instead. */
+@property --sky-top { syntax: '<color>'; inherits: true; initial-value: #B4E0FA; }
+@property --sky-horizon { syntax: '<color>'; inherits: true; initial-value: #B4E0FA; }
+@property --scene-shade { syntax: '<color>'; inherits: true; initial-value: transparent; }
+
+/* --- Sun, moon and stars --------------------------------------------------
+   app.js works out where the sun stands from the clock and the season, and
+   parks it on an arc: up out of the ground on the left, over the top, and
+   back down on the right. The moon takes the same path overnight. */
+.celestial {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sun, .moon {
+  position: absolute;
+  left: var(--sun-x, 50%);
+  top: var(--sun-y, 100%);
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  /* Both slide along the same arc, so the position has to keep up with the
+     clock without stepping. */
+  transition: top 60s linear, left 60s linear, opacity 90s linear;
+}
+
+.sun {
+  opacity: var(--sun-opacity, 0);
+  background: radial-gradient(circle at 50% 42%, #FFF6D8 0 34%, var(--sun-face, #FFD166) 62%, var(--sun-face, #FFD166) 100%);
+  box-shadow: 0 0 34px 14px var(--sun-glow, rgba(255, 209, 102, 0.45));
+}
+
+.moon {
+  left: var(--moon-x, 50%);
+  top: var(--moon-y, 100%);
+  opacity: var(--moon-opacity, 0);
+  background:
+    radial-gradient(circle at 62% 38%, rgba(180, 190, 220, 0.5) 0 12%, transparent 13%),
+    radial-gradient(circle at 38% 62%, rgba(180, 190, 220, 0.42) 0 9%, transparent 10%),
+    radial-gradient(circle at 45% 45%, #F6F7FF 0 70%, #DDE2F2 100%);
+  box-shadow: 0 0 26px 8px rgba(206, 216, 255, 0.3);
+}
+
+/* The whole field fades in and out together; each star only twinkles. */
+.starfield {
+  position: absolute;
+  inset: 0;
+  opacity: var(--star-opacity, 0);
+  transition: opacity 60s linear;
+}
+.star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: #FFFFFF;
+  animation: twinkle var(--tw) ease-in-out var(--twd) infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: 0.35; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* --- Weather --------------------------------------------------------------
@@ -521,7 +598,11 @@ body[data-screen="gm"] .version {
 .scene__dusk {
   position: absolute;
   inset: 0;
-  background: var(--scene-night);
+  /* Two tints in one layer: the hour of the day, then the app's own dark
+     theme on top of it. */
+  background-image:
+    linear-gradient(var(--scene-shade, transparent), var(--scene-shade, transparent)),
+    linear-gradient(var(--scene-night), var(--scene-night));
   pointer-events: none;
 }
 

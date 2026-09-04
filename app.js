@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.16.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -674,11 +674,21 @@ const WEATHER = {
             tints: ['#FFFFFF', '#E8F3FF'] },
 };
 
-/* Steps of the golden ratio never repeat and never clump, so the drops end up
-   scattered rather than in a grid — and identically on every phone, which a
-   random number would not be. */
+/* Two ways to place things that must look scattered but come out the same on
+   every phone, which a random number would not.
+
+   spread() steps by the golden ratio: it never repeats and never clumps, so
+   it is what spaces things across the width. Every seed walks in the same
+   steps though, so using it twice on one object would tie its size to its
+   position — which for stars drew a neat diagonal across the sky. scatter()
+   is a hash instead: unrelated between seeds, at the cost of the even
+   spacing, which is exactly the trade for every other property. */
 const SPREAD = 0.6180339887;
-const scatter = (seed, i) => (seed + i * SPREAD) % 1;
+const spread = (seed, i) => (seed + i * SPREAD) % 1;
+const scatter = (seed, i) => {
+  const v = Math.sin((i + 1) * 12.9898 + seed * 78.233) * 43758.5453;
+  return v - Math.floor(v);
+};
 const between = ([from, to], t) => from + (to - from) * t;
 
 let weatherSeason = null;
@@ -692,7 +702,7 @@ function buildWeather(season) {
   for (let i = 0; i < spec.count; i++) {
     const fall = between(spec.fall, scatter(0.71, i));
     const style = {
-      '--x': `${(4 + scatter(0.13, i) * 90).toFixed(1)}%`,
+      '--x': `${(4 + spread(0.13, i) * 90).toFixed(1)}%`,
       '--size': `${between(spec.size, scatter(0.37, i)).toFixed(1)}px`,
       '--fall': `${fall.toFixed(2)}s`,
       '--sway': `${between(spec.sway, scatter(0.29, i)).toFixed(2)}s`,
@@ -712,6 +722,144 @@ function buildWeather(season) {
   layer.replaceChildren(...drops);
 }
 
+/* --- Time of day ----------------------------------------------------------
+   The sun climbs out of the ground on the left, crosses the top and sets on
+   the right; the sky is carried along with it, from dark before sunrise
+   through the day and into a deep red evening, and the stars come out once
+   it is gone. The moon then takes the same path overnight.
+
+   Sunrise and sunset move with the season, which is why the winter day is a
+   short low arc and the summer one a long high one. ?time=21:30 pretends it
+   is that hour, which is the only way to see the whole cycle at once. */
+const DAYLIGHT = {
+  spring: [6.5, 20.5],
+  summer: [5.3, 21.7],
+  autumn: [7.2, 19.3],
+  winter: [8.1, 16.9],
+};
+
+/* [sky top, sky horizon, shade over the scenery, star brightness] */
+const SKIES = {
+  night:   ['#0E1330', '#1C2550', [12, 16, 45, 0.62], 1],
+  dawn:    ['#33356B', '#F0A05F', [60, 35, 55, 0.24], 0.3],
+  morning: ['#93C9EE', '#FBDDAE', [255, 205, 140, 0.05], 0],
+  day:     [null, null, [0, 0, 0, 0], 0],   // filled in from the season
+  evening: ['#5E4A88', '#E85E38', [110, 45, 30, 0.16], 0],
+  dusk:    ['#2B2350', '#8C3557', [40, 28, 70, 0.42], 0.35],
+};
+
+const hexToRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const rgbToHex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const lighten = (rgb, t) => mix(rgb, [255, 255, 255], t);
+
+/** Hour of the day as a fraction, e.g. 13:30 → 13.5. */
+function hourNow() {
+  const forced = new URLSearchParams(location.search).get('time');
+  const match = /^(\d{1,2})(?::(\d{2}))?$/.exec(forced ?? '');
+  if (match) return (Number(match[1]) % 24) + Number(match[2] ?? 0) / 60;
+  const now = new Date();
+  return now.getHours() + now.getMinutes() / 60;
+}
+
+/** The sky at this hour, blended from the two phases it falls between. */
+function skyAt(hour, [rise, set], daySky) {
+  const keys = [
+    [rise - 1.2, 'night'], [rise + 0.1, 'dawn'], [rise + 1.6, 'morning'],
+    [rise + 3.2, 'day'], [set - 3.2, 'day'], [set - 1.2, 'evening'],
+    [set + 0.2, 'dusk'], [set + 1.6, 'night'],
+  ];
+
+  const look = (name) => {
+    const [top, horizon, shade, star] = SKIES[name];
+    return name === 'day'
+      ? { top: daySky, horizon: lighten(daySky, 0.34), shade, star }
+      : { top: hexToRgb(top), horizon: hexToRgb(horizon), shade, star };
+  };
+
+  // Before the first key and after the last it is simply night.
+  if (hour <= keys[0][0] || hour >= keys.at(-1)[0]) return look('night');
+
+  const next = keys.findIndex(([at]) => at > hour);
+  const [fromAt, fromKey] = keys[next - 1];
+  const [toAt, toKey] = keys[next];
+  const t = (hour - fromAt) / (toAt - fromAt);
+  const a = look(fromKey);
+  const b = look(toKey);
+  return {
+    top: mix(a.top, b.top, t),
+    horizon: mix(a.horizon, b.horizon, t),
+    shade: mix(a.shade, b.shade, t),
+    star: a.star + (b.star - a.star) * t,
+  };
+}
+
+/** Where along its arc a body stands, as [x%, y%] plus how visible it is. */
+function arcAt(fraction) {
+  const t = Math.min(1, Math.max(0, fraction));
+  return {
+    x: 5 + 90 * t,
+    // Sits below the hills at both ends, so it rises and sets behind them.
+    y: 88 - 76 * Math.sin(Math.PI * t),
+    // Fades over the last stretch rather than blinking out at the horizon.
+    visible: fraction < 0 || fraction > 1 ? 0 : Math.min(1, Math.sin(Math.PI * t) * 6),
+  };
+}
+
+function renderSky() {
+  const scene = $('scene');
+  if (!scene) return;
+
+  const hour = hourNow();
+  const [rise, set] = DAYLIGHT[scene.dataset.season] ?? DAYLIGHT.summer;
+  const seasonSky = getComputedStyle(scene).getPropertyValue('--sea-sky').trim();
+  const sky = skyAt(hour, [rise, set], hexToRgb(seasonSky || '#B4E0FA'));
+
+  const sun = arcAt((hour - rise) / (set - rise));
+  // The moon picks up where the sun left off and carries on past midnight.
+  const nightLength = 24 - set + rise;
+  const sinceSet = (hour - set + 24) % 24;
+  const moon = arcAt(sinceSet / nightLength);
+
+  const set_ = (prop, value) => scene.style.setProperty(prop, value);
+  set_('--sky-top', rgbToHex(sky.top));
+  set_('--sky-horizon', rgbToHex(sky.horizon));
+  set_('--scene-shade', `rgba(${sky.shade.slice(0, 3).map(Math.round).join(', ')}, ${sky.shade[3].toFixed(3)})`);
+  set_('--star-opacity', sky.star.toFixed(3));
+  set_('--sun-x', `${sun.x.toFixed(2)}%`);
+  set_('--sun-y', `${sun.y.toFixed(2)}%`);
+  set_('--sun-opacity', sun.visible.toFixed(3));
+  set_('--moon-x', `${moon.x.toFixed(2)}%`);
+  set_('--moon-y', `${moon.y.toFixed(2)}%`);
+  set_('--moon-opacity', (moon.visible * Math.max(sky.star, 0.25)).toFixed(3));
+
+  // Low sun means a red sun; overhead it is pale gold.
+  const low = 1 - Math.min(1, Math.max(0, (88 - sun.y) / 76));
+  set_('--sun-face', rgbToHex(mix(hexToRgb('#FFD166'), hexToRgb('#F4703A'), low)));
+  set_('--sun-glow', `rgba(255, ${Math.round(180 - 60 * low)}, ${Math.round(120 - 60 * low)}, 0.45)`);
+}
+
+/** Scattered once at startup; rebuilding them would restart every twinkle. */
+function buildStars() {
+  const field = $('starfield');
+  if (!field || field.childElementCount) return;
+  const stars = Array.from({ length: 34 }, (_, i) => {
+    const star = document.createElement('span');
+    star.className = 'star';
+    const size = 1.2 + scatter(0.19, i) * 2.2;
+    Object.entries({
+      '--x': `${(spread(0.07, i) * 98).toFixed(1)}%`,
+      // Kept to the upper two thirds: below that the scenery covers them.
+      '--y': `${(scatter(0.61, i) * 62).toFixed(1)}%`,
+      '--size': `${size.toFixed(2)}px`,
+      '--tw': `${(1.8 + scatter(0.41, i) * 3.4).toFixed(2)}s`,
+      '--twd': `${(-scatter(0.83, i) * 4).toFixed(2)}s`,
+    }).forEach(([prop, value]) => star.style.setProperty(prop, value));
+    return star;
+  });
+  field.replaceChildren(...stars);
+}
+
 function renderSeason() {
   const scene = $('scene');
   if (!scene) return;
@@ -722,6 +870,7 @@ function renderSeason() {
     weatherSeason = season;
     buildWeather(season);
   }
+  renderSky();
 }
 
 /* --- Chest artwork --------------------------------------------------------
@@ -1785,7 +1934,13 @@ function start() {
 
   // Set before anything else paints, so the backdrop never flashes the wrong
   // season on the way in.
+  buildStars();
   renderSeason();
+  // The sky only creeps, so once a minute is plenty; coming back to the app
+  // after hours away has to catch up straight away, though.
+  setInterval(renderSky, 60_000);
+  document.addEventListener('visibilitychange', () => !document.hidden && renderSky());
+
   registerWorker().then(renderPushButton);
 
   let savedRole = null;

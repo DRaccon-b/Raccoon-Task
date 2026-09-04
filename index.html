@@ -19,7 +19,7 @@
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=1.15.0">
+<link rel="stylesheet" href="styles.css?v=1.16.0">
 </head>
 <body>
 
@@ -137,6 +137,14 @@
         <!-- Confirmed quests wait here as chests until the player opens them.
              They hang under the header, in front of the sky. -->
         <div class="chest-tray" id="chestTray" hidden></div>
+
+        <!-- Sun, moon and stars. Behind the scenery, so the sun rises out
+             from behind the hills rather than in front of them. -->
+        <div class="celestial" aria-hidden="true">
+          <div class="starfield" id="starfield"></div>
+          <div class="moon"></div>
+          <div class="sun"></div>
+        </div>
 
         <!-- Clouds drift across the open sky. Drawn before the scenery, so a
              peak in a short scene passes in front of them. -->
@@ -587,6 +595,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.15.0"></script>
+<script src="app.js?v=1.16.0"></script>
 </body>
 </html>
