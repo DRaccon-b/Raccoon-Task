@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.12.0">
+<link rel="stylesheet" href="styles.css?v=1.12.1">
 </head>
 <body>
 
@@ -162,28 +162,38 @@
         <svg class="backdrop" viewBox="0 0 560 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
           <defs>
             <g id="bandMountains">
+              <!-- Behind the peaks, so a summit passes in front of them. -->
               <g fill="var(--sea-cloud)">
-                <ellipse cx="252" cy="30" rx="26" ry="13"/><ellipse cx="272" cy="34" rx="18" ry="10"/>
-                <ellipse cx="234" cy="35" rx="16" ry="9"/>
-                <ellipse cx="492" cy="22" rx="20" ry="10"/><ellipse cx="508" cy="26" rx="14" ry="8"/>
-                <ellipse cx="478" cy="27" rx="12" ry="7"/>
-                <ellipse cx="120" cy="20" rx="17" ry="9"/><ellipse cx="134" cy="24" rx="12" ry="7"/>
+                <ellipse cx="180" cy="36" rx="24" ry="12"/><ellipse cx="198" cy="40" rx="17" ry="10"/>
+                <ellipse cx="164" cy="41" rx="14" ry="8"/>
+                <ellipse cx="356" cy="30" rx="19" ry="10"/><ellipse cx="370" cy="34" rx="13" ry="7"/>
+                <ellipse cx="344" cy="35" rx="11" ry="6"/>
               </g>
-              <path d="M70 30 L130 112 H10 Z" fill="var(--sea-mtn)"/>
-              <path d="M70 30 L130 112 H70 Z" fill="var(--sea-mtn-shade)"/>
-              <path d="M70 30 L90.5 58 Q84 63 78 58 Q70 66 62 58 Q55 63 49.5 58 Z" fill="var(--sea-snow)"/>
 
-              <path d="M200 48 L255 112 H145 Z" fill="var(--sea-mtn)"/>
-              <path d="M200 48 L255 112 H200 Z" fill="var(--sea-mtn-shade)"/>
-              <path d="M200 48 L220.6 72 Q214 77 208 72 Q200 80 192 72 Q185 77 179.4 72 Z" fill="var(--sea-snow)"/>
+              <!-- All five stand on y=142, the height of the meadow, so the
+                   range rises out of the ground rather than off the hills.
+                   Heights and gaps are deliberately uneven: two big peaks, a
+                   couple of stubby ones between them, and one at each end
+                   whose slopes meet exactly at the seam. -->
+              <path d="M48 36 L112 142 H0 Z" fill="var(--sea-mtn)"/>
+              <path d="M48 36 L112 142 H48 Z" fill="var(--sea-mtn-shade)"/>
+              <path d="M48 36 L66.1 66 Q60 71 54 66 Q48 74 41 66 Q35 71 34.4 66 Z" fill="var(--sea-snow)"/>
 
-              <path d="M350 22 L420 112 H280 Z" fill="var(--sea-mtn)"/>
-              <path d="M350 22 L420 112 H350 Z" fill="var(--sea-mtn-shade)"/>
-              <path d="M350 22 L373.3 52 Q366 57 359 52 Q350 60 341 52 Q334 57 326.7 52 Z" fill="var(--sea-snow)"/>
+              <path d="M132 62 L176 142 H96 Z" fill="var(--sea-mtn)"/>
+              <path d="M132 62 L176 142 H132 Z" fill="var(--sea-mtn-shade)"/>
+              <path d="M132 62 L144.1 84 Q140 88 136 84 Q132 90 127 84 Q124 88 122.1 84 Z" fill="var(--sea-snow)"/>
 
-              <path d="M492 52 L540 112 H444 Z" fill="var(--sea-mtn)"/>
-              <path d="M492 52 L540 112 H492 Z" fill="var(--sea-mtn-shade)"/>
-              <path d="M492 52 L509 73 Q503 78 498 73 Q492 80 486 73 Q480 78 475 73 Z" fill="var(--sea-snow)"/>
+              <path d="M258 16 L350 142 H170 Z" fill="var(--sea-mtn)"/>
+              <path d="M258 16 L350 142 H258 Z" fill="var(--sea-mtn-shade)"/>
+              <path d="M258 16 L284.3 52 Q276 58 268 52 Q258 62 248 52 Q240 58 232.8 52 Z" fill="var(--sea-snow)"/>
+
+              <path d="M392 68 L448 142 H344 Z" fill="var(--sea-mtn)"/>
+              <path d="M392 68 L448 142 H392 Z" fill="var(--sea-mtn-shade)"/>
+              <path d="M392 68 L408.6 90 Q403 95 398 90 Q392 97 386 90 Q382 95 377.7 90 Z" fill="var(--sea-snow)"/>
+
+              <path d="M492 48 L560 142 H436 Z" fill="var(--sea-mtn)"/>
+              <path d="M492 48 L560 142 H492 Z" fill="var(--sea-mtn-shade)"/>
+              <path d="M492 48 L512.3 76 Q506 81 500 76 Q492 84 484 76 Q477 81 475.3 76 Z" fill="var(--sea-snow)"/>
             </g>
 
             <!-- Both hill paths start and end at the same height, so the seam
@@ -570,6 +580,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.12.0"></script>
+<script src="app.js?v=1.12.1"></script>
 </body>
 </html>
