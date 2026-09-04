@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.11.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -459,6 +459,7 @@ function renderRaccoon() {
   $('raccoonMood').textContent = mood;
   $('raccoonStatus').textContent = status;
   renderGait(active);
+  renderSeason();
 }
 
 /* Only active quests set the pace: one waiting on her confirmation is off his
@@ -480,15 +481,35 @@ function renderGait(active) {
   if (gait === 'rest') {
     // Let the stylesheet's own resting timings stand.
     scene.style.removeProperty('--step');
-    scene.style.removeProperty('--road-speed');
-    scene.style.removeProperty('--bush-speed');
+    ['--road-speed', '--flora-speed', '--hill-speed', '--mtn-speed']
+      .forEach((prop) => scene.style.removeProperty(prop));
     return;
   }
 
-  // The ground has to keep pace with the legs, or he moonwalks.
+  // The ground has to keep pace with the legs, or he moonwalks. The further
+  // away a band is, the less it moves, which is what gives the scene depth.
   scene.style.setProperty('--step', `${step}s`);
   scene.style.setProperty('--road-speed', `${(step * 1.9).toFixed(3)}s`);
-  scene.style.setProperty('--bush-speed', `${(step * 15).toFixed(2)}s`);
+  scene.style.setProperty('--flora-speed', `${(step * 15).toFixed(2)}s`);
+  scene.style.setProperty('--hill-speed', `${(step * 34).toFixed(2)}s`);
+  scene.style.setProperty('--mtn-speed', `${(step * 95).toFixed(2)}s`);
+}
+
+/* --- Season ---------------------------------------------------------------
+   The backdrop follows the calendar. ?season=winter forces one, which is the
+   only way to see the other three without waiting for the year to turn. */
+const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
+const FORCED_SEASON = new URLSearchParams(location.search).get('season');
+
+function seasonFor(date = new Date()) {
+  if (SEASONS.includes(FORCED_SEASON)) return FORCED_SEASON;
+  // Dec-Feb winter, Mar-May spring, Jun-Aug summer, Sep-Nov autumn.
+  return SEASONS[Math.floor(((date.getMonth() + 1) % 12) / 3)];
+}
+
+function renderSeason() {
+  const scene = $('scene');
+  if (scene) scene.dataset.season = seasonFor();
 }
 
 /* --- Chest artwork --------------------------------------------------------
@@ -1534,6 +1555,10 @@ function start() {
     showBanner('Datenbank nicht erreichbar — Änderungen werden nicht gespeichert.');
     console.error('supabase-js konnte nicht geladen werden.');
   }
+
+  // Set before anything else paints, so the backdrop never flashes the wrong
+  // season on the way in.
+  renderSeason();
 
   let savedRole = null;
   try { savedRole = localStorage.getItem(ROLE_KEY); } catch { /* private mode */ }

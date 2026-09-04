@@ -60,6 +60,7 @@
   --road-line: #FBF8F3;
   --scene-bush: #DFD6C6;
   --road-shadow: rgba(30, 27, 46, 0.28);
+  --scene-night: transparent;
 
   --shadow-sm: 0 1px 3px rgba(30, 27, 46, 0.06);
   --shadow-md: 0 4px 12px rgba(30, 27, 46, 0.08);
@@ -101,6 +102,7 @@
     --road-line: #9C94BC;
     --scene-bush: #262038;
     --road-shadow: rgba(0, 0, 0, 0.4);
+  --scene-night: rgba(18, 16, 38, 0.42);
 
     --ink: #F0ECF9;
     --ink-secondary: #B8B3CC;
@@ -142,6 +144,7 @@
   --road-line: #9C94BC;
   --scene-bush: #262038;
   --road-shadow: rgba(0, 0, 0, 0.4);
+  --scene-night: rgba(18, 16, 38, 0.42);
 
   --ink: #F0ECF9;
   --ink-secondary: #B8B3CC;
@@ -419,24 +422,80 @@ body[data-screen="gm"] .version {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;       /* the layers reach past the phone; clip them here */
 
-  /* One step drives everything; app.js overrides these per gait so the
-     ground always keeps pace with the legs. */
+  /* One step drives everything; app.js overrides these per gait so the ground
+     always keeps pace with the legs. Further away means slower, which is what
+     gives the scene its depth. */
   --step: 0.62s;
   --road-speed: 1.18s;
-  --bush-speed: 9.3s;
+  --flora-speed: 9.3s;
+  --hill-speed: 21s;
+  --mtn-speed: 59s;
 }
 
-.scene__bushes {
+/* --- Seasonal backdrop ----------------------------------------------------
+   Reaches 70px past each side of the phone, so a band that is about to slide
+   into view has already been drawn and the motion never pops at the edge. */
+.backdrop {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 34px;          /* rests on the far edge of the road */
-  height: 30px;
-  background-image: radial-gradient(circle at 50% 100%, var(--scene-bush) 0 15px, transparent 15px);
-  background-size: 74px 30px;
-  background-repeat: repeat-x;
-  animation: scene-scroll var(--bush-speed) linear infinite;
+  top: 0;
+  left: -70px;
+  /* An SVG keeps its own aspect ratio unless both sides are spelled out, so
+     insets alone would leave it lopsided. 70px of scenery hangs off each edge
+     of the phone; the height runs down to the road, minus its top edge. */
+  width: calc(100% + 140px);
+  height: calc(100% - 31px);
+}
+
+.band {
+  animation-name: band-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.band--mtn { animation-duration: var(--mtn-speed); }
+.band--hill { animation-duration: var(--hill-speed); }
+.band--flora { animation-duration: var(--flora-speed); }
+
+/* Exactly one band width, so copy two lands where copy one started. */
+@keyframes band-scroll {
+  from { transform: translateX(-560px); }
+  to { transform: translateX(0); }
+}
+
+/* Winter strips the leaves off, spring puts blossom on. */
+.flora__bare, .flora__snow, .flora__bloom { display: none; }
+.scene[data-season="spring"] .flora__bloom { display: block; }
+.scene[data-season="winter"] .flora__leaves { display: none; }
+.scene[data-season="winter"] .flora__bare,
+.scene[data-season="winter"] .flora__snow { display: block; }
+
+/* Palettes. The mountains and their snow stay recognisable all year; the
+   ground, leaves and undergrowth carry the season. */
+.scene[data-season="spring"] {
+  --sea-sky: #BFE4F8; --sea-mtn: #9A97D8; --sea-mtn-shade: #8683CB; --sea-snow: #FBFAF6; --sea-cloud: #FDFBF6;
+  --sea-hill: #A9D276; --sea-ground: #8FC65C; --sea-bark: #8A5A3B;
+  --sea-leaf: #77BE55; --sea-leaf-light: #97D573; --sea-bush: #6FB44F; --sea-grass: #5FA341;
+  --sea-bloom: #F6A8C0; --sea-bloom2: #FBD871;
+}
+.scene[data-season="summer"] {
+  --sea-sky: #B4E0FA; --sea-mtn: #9A97D8; --sea-mtn-shade: #8683CB; --sea-snow: #FBFAF6; --sea-cloud: #FDFBF6;
+  --sea-hill: #7DC257; --sea-ground: #5FAE41; --sea-bark: #7B4F34;
+  --sea-leaf: #3E9A45; --sea-leaf-light: #56B159; --sea-bush: #3B9241; --sea-grass: #2F7C36;
+  --sea-bloom: transparent; --sea-bloom2: transparent;
+}
+.scene[data-season="autumn"] {
+  --sea-sky: #C6E6F7; --sea-mtn: #9A97D8; --sea-mtn-shade: #8683CB; --sea-snow: #FBFAF6; --sea-cloud: #FBF6EC;
+  --sea-hill: #EFB33C; --sea-ground: #E79A24; --sea-bark: #7B4F34;
+  --sea-leaf: #F08A22; --sea-leaf-light: #F9B640; --sea-bush: #DC5E22; --sea-grass: #C9761E;
+  --sea-bloom: transparent; --sea-bloom2: transparent;
+}
+.scene[data-season="winter"] {
+  --sea-sky: #CFE6FA; --sea-mtn: #7EA8E0; --sea-mtn-shade: #6D96D2; --sea-snow: #FDFDFF; --sea-cloud: #FFFFFF;
+  --sea-hill: #E6F1FC; --sea-ground: #F6FAFF; --sea-bark: #7B4F34;
+  --sea-leaf: #DCEAF8; --sea-leaf-light: #EEF6FF; --sea-bush: #DCE9F7; --sea-grass: #CBDCEF;
+  --sea-bloom: transparent; --sea-bloom2: transparent;
 }
 
 .road {
@@ -447,26 +506,26 @@ body[data-screen="gm"] .version {
   border-top: 3px solid var(--road-edge);
   overflow: hidden;
 }
+/* Runs two dash periods past each side for the same reason as the backdrop,
+   and moves by transform rather than background-position so the phone can
+   hand the whole strip to the GPU. */
 .road__dashes {
   position: absolute;
   top: 50%;
-  left: 0;
-  right: 0;
+  left: -104px;
+  right: -104px;
   height: 4px;
   margin-top: -2px;
   background-image: repeating-linear-gradient(
     90deg, var(--road-line) 0 22px, transparent 22px 52px);
   animation: road-scroll var(--road-speed) linear infinite;
+  will-change: transform;
 }
 
-/* Both scroll the pattern by exactly one period, so the loop is seamless. */
+/* One dash period, so the strip snaps back invisibly. */
 @keyframes road-scroll {
-  from { background-position-x: 0; }
-  to { background-position-x: 52px; }
-}
-@keyframes scene-scroll {
-  from { background-position-x: 0; }
-  to { background-position-x: 74px; }
+  from { transform: translateX(0); }
+  to { transform: translateX(52px); }
 }
 
 /* Pulled down over the road's top edge so he stands on it rather than
@@ -559,7 +618,7 @@ body[data-screen="gm"] .version {
 /* Rest: nothing is open, so he stops and just breathes. The road and the
    bushes hold still with him instead of sliding past a standing raccoon. */
 .scene[data-gait="rest"] .road__dashes,
-.scene[data-gait="rest"] .scene__bushes { animation-play-state: paused; }
+.scene[data-gait="rest"] .band { animation-play-state: paused; }
 
 .scene[data-gait="rest"] .raccoon-walker {
   animation: raccoon-breathe 3.4s ease-in-out infinite;
