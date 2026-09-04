@@ -54,6 +54,22 @@
   --mask: #374151;
   --ear: #F9A8D4;
 
+  /* --- Skins ---------------------------------------------------------------
+     One named colour set per skin. app.js sets data-skin on .raccoon-svg
+     from player_stats.skin; that swaps --fur etc. below. The wardrobe's own
+     swatches read the same tokens, so a colour only ever lives in one place. */
+  --skin-default-fur: #6B7280; --skin-default-fur-light: #9CA3AF;
+  --skin-default-fur-dark: #4B5563; --skin-default-mask: #374151; --skin-default-ear: #F9A8D4;
+
+  --skin-rotbraun-fur: #92572E; --skin-rotbraun-fur-light: #C08552;
+  --skin-rotbraun-fur-dark: #6B3D1F; --skin-rotbraun-mask: #4A2A15; --skin-rotbraun-ear: #F4A895;
+
+  --skin-mitternacht-fur: #3B3B47; --skin-mitternacht-fur-light: #56566A;
+  --skin-mitternacht-fur-dark: #26262E; --skin-mitternacht-mask: #17171C; --skin-mitternacht-ear: #B48EAD;
+
+  --skin-schnee-fur: #F1F0EE; --skin-schnee-fur-light: #FFFFFF;
+  --skin-schnee-fur-dark: #D8D6D2; --skin-schnee-mask: #8FA3B0; --skin-schnee-ear: #FFD9E8;
+
   /* The road the raccoon walks along */
   --road: #7A7486;
   --road-edge: #9A94A6;
@@ -793,19 +809,22 @@ body[data-screen="gm"] .version {
   touch-action: manipulation;
 }
 .raccoon-svg { width: 100%; height: 100%; display: block; }
-
-/* Where each skin's tail meets its body differs (a raccoon's ringed tail, a
-   bear's stub, a dino's sweep, a shark's back fin), so the sway's pivot is
-   set per skin rather than assumed. Falls back to the raccoon's own origin
-   if a skin is ever added without one. */
-.raccoon-svg[data-skin="default"] .raccoon-tail { transform-origin: 8% 92%; }
-.raccoon-svg[data-skin="baer"] .raccoon-tail { transform-origin: 15% 55%; }
-.raccoon-svg[data-skin="dino"] .raccoon-tail { transform-origin: 0% 95%; }
-.raccoon-svg[data-skin="hai"] .raccoon-tail { transform-origin: 20% 90%; }
+.raccoon-svg[data-skin="rotbraun"] {
+  --fur: var(--skin-rotbraun-fur); --fur-light: var(--skin-rotbraun-fur-light);
+  --fur-dark: var(--skin-rotbraun-fur-dark); --mask: var(--skin-rotbraun-mask); --ear: var(--skin-rotbraun-ear);
+}
+.raccoon-svg[data-skin="mitternacht"] {
+  --fur: var(--skin-mitternacht-fur); --fur-light: var(--skin-mitternacht-fur-light);
+  --fur-dark: var(--skin-mitternacht-fur-dark); --mask: var(--skin-mitternacht-mask); --ear: var(--skin-mitternacht-ear);
+}
+.raccoon-svg[data-skin="schnee"] {
+  --fur: var(--skin-schnee-fur); --fur-light: var(--skin-schnee-fur-light);
+  --fur-dark: var(--skin-schnee-fur-dark); --mask: var(--skin-schnee-mask); --ear: var(--skin-schnee-ear);
+}
 
 /* --- Wardrobe --------------------------------------------------------------
-   Skin picker: the same tier-picker card layout, with an emoji standing in
-   for each animal (drawing a tiny accurate icon per skin isn't worth it). */
+   Skin picker: the same tier-picker card layout, but the icon is a plain
+   colour swatch instead of an emoji. */
 .skin-picker {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -826,7 +845,18 @@ body[data-screen="gm"] .version {
 }
 .skin-option:active { transform: scale(0.96); }
 .skin-option.is-selected { border-color: var(--plum); background: var(--plum-soft); }
-.skin-option__icon { flex-shrink: 0; font-size: 26px; line-height: 1; }
+.skin-option__swatch {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(30, 27, 46, 0.1);
+}
+.skin-option[data-skin="default"] .skin-option__swatch { background: var(--skin-default-fur); }
+.skin-option[data-skin="rotbraun"] .skin-option__swatch { background: var(--skin-rotbraun-fur); }
+.skin-option[data-skin="mitternacht"] .skin-option__swatch { background: var(--skin-mitternacht-fur); }
+.skin-option[data-skin="schnee"] .skin-option__swatch { background: var(--skin-schnee-fur); }
 .skin-option__label {
   font-family: var(--font-display);
   font-weight: 600;
