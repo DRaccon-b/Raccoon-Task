@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.18.0';
+const APP_VERSION = '1.18.1';
 
 /*
  * On the home screen, iOS usually freezes the app instead of closing it when
@@ -224,13 +224,23 @@ function emptyState(icon, text) {
 /* --- Notifications ------------------------------------------------------- */
 
 let toastTimer = null;
+let toastCleanupTimer = null;
 
 function showToast(message, kind = 'info') {
   const el = $('toast');
   el.textContent = message;
   el.className = `toast toast--${kind} is-visible`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('is-visible'), 2600);
+  clearTimeout(toastCleanupTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('is-visible');
+    // Wait out the fade before wiping it, or the colour and text would
+    // visibly snap away mid-transition instead of fading with the rest.
+    toastCleanupTimer = setTimeout(() => {
+      el.className = 'toast';
+      el.textContent = '';
+    }, 400);
+  }, 2600);
 }
 
 function showBanner(message) {
