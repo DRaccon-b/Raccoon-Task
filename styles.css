@@ -406,9 +406,7 @@ body[data-screen="gm"] .version {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px;
+  justify-content: flex-end;   /* the scene grows, the status line hugs it */
   min-height: 280px;
 }
 /* --- Walking scene --------------------------------------------------------
@@ -417,12 +415,21 @@ body[data-screen="gm"] .version {
    stay in sync; the road and bushes run at their own speeds for depth. */
 .scene {
   position: relative;
-  width: calc(100% + 40px);
-  margin-inline: -20px;   /* full-bleed, so the road runs off both edges */
+  align-self: stretch;    /* full-bleed, so the road runs off both edges */
+  /* Takes whatever height is left under the header, so the sky reaches all
+     the way up. Growing but never shrinking, so a stack of chests pushes the
+     stage taller instead of being cut off. */
+  flex: 1 0 auto;
+  min-height: 210px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;   /* the raccoon and the road sit on the floor */
   overflow: hidden;       /* the layers reach past the phone; clip them here */
+
+  /* The sky is painted on the scene rather than inside the backdrop, so it
+     fills the whole height however tall the phone is. */
+  background-color: var(--sea-sky);
 
   /* One step drives everything; app.js overrides these per gait so the ground
      always keeps pace with the legs. Further away means slower, which is what
@@ -432,6 +439,27 @@ body[data-screen="gm"] .version {
   --flora-speed: 9.3s;
   --hill-speed: 21s;
   --mtn-speed: 59s;
+  --sky-speed: 94s;
+}
+
+/* Only as tall as the clouds need; the rest of the sky is the scene's own
+   background, so it fills whatever height is left under the header. */
+.skydeck {
+  position: absolute;
+  top: 0;
+  left: -70px;
+  width: calc(100% + 140px);
+  height: 90px;
+}
+
+/* Lays a dusk tint over sky, clouds and scenery in one go. It sits between
+   the backdrop and the road in the markup, so the road and the raccoon keep
+   the colours their own dark theme already gives them. */
+.scene__dusk {
+  position: absolute;
+  inset: 0;
+  background: var(--scene-night);
+  pointer-events: none;
 }
 
 /* --- Seasonal backdrop ----------------------------------------------------
@@ -439,13 +467,14 @@ body[data-screen="gm"] .version {
    into view has already been drawn and the motion never pops at the edge. */
 .backdrop {
   position: absolute;
-  top: 0;
+  bottom: 31px;           /* sits on the road, minus its top edge */
   left: -70px;
   /* An SVG keeps its own aspect ratio unless both sides are spelled out, so
      insets alone would leave it lopsided. 70px of scenery hangs off each edge
-     of the phone; the height runs down to the road, minus its top edge. */
+     of the phone, and the height is fixed: stretching it to a taller scene
+     would blow the mountains up out of all proportion to the raccoon. */
   width: calc(100% + 140px);
-  height: calc(100% - 31px);
+  height: 176px;
 }
 
 .band {
@@ -454,6 +483,7 @@ body[data-screen="gm"] .version {
   animation-iteration-count: infinite;
   will-change: transform;
 }
+.band--sky { animation-duration: var(--sky-speed); }
 .band--mtn { animation-duration: var(--mtn-speed); }
 .band--hill { animation-duration: var(--hill-speed); }
 .band--flora { animation-duration: var(--flora-speed); }
@@ -701,6 +731,7 @@ body[data-screen="gm"] .version {
 }
 .raccoon-status {
   max-width: 260px;
+  padding: 14px 20px 16px;
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
@@ -717,14 +748,20 @@ body[data-screen="gm"] .version {
    A confirmed quest's reward waits here rather than crediting instantly —
    opening it is a small ceremony of its own. */
 .chest-tray {
+  position: relative;
+  z-index: 2;              /* over the sky, in front of the scenery */
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
   max-width: 360px;
-  margin: 0 auto 4px;
-  padding: 0 4px;
+  margin-bottom: auto;     /* pinned to the top of the scene */
+  padding: 12px 24px 0;
 }
+/* Its padding would otherwise leave a gap under the header on an empty tray,
+   because a class rule outranks the hidden attribute. */
+.chest-tray[hidden] { display: none; }
+
 .chest-tray__title {
   font-family: var(--font-display);
   font-size: 15px;

@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.11.0">
+<link rel="stylesheet" href="styles.css?v=1.12.0">
 </head>
 <body>
 
@@ -128,13 +128,31 @@
   <!-- Raccoon -->
   <section class="view is-active" id="viewRaccoon">
     <div class="raccoon-stage">
-      <!-- Confirmed quests wait here as chests until the player opens them. -->
-      <div class="chest-tray" id="chestTray" hidden></div>
-
       <!-- The scene scrolls to the right, so the raccoon reads as moving left.
            app.js sets data-gait from the open quest count and data-season
            from today's date. -->
       <div class="scene" id="scene" data-gait="rest" data-season="summer">
+        <!-- Confirmed quests wait here as chests until the player opens them.
+             They hang under the header, in front of the sky. -->
+        <div class="chest-tray" id="chestTray" hidden></div>
+
+        <!-- Clouds drift across the open sky. Drawn before the scenery, so a
+             peak in a short scene passes in front of them. -->
+        <svg class="skydeck" viewBox="0 0 560 90" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+          <defs>
+            <g id="bandClouds" fill="var(--sea-cloud)">
+              <ellipse cx="70" cy="34" rx="28" ry="14"/><ellipse cx="95" cy="38" rx="20" ry="11"/>
+              <ellipse cx="48" cy="39" rx="17" ry="9"/>
+              <ellipse cx="300" cy="22" rx="22" ry="11"/><ellipse cx="320" cy="26" rx="15" ry="8"/>
+              <ellipse cx="283" cy="27" rx="13" ry="7"/>
+              <ellipse cx="450" cy="54" rx="18" ry="9"/><ellipse cx="465" cy="57" rx="13" ry="7"/>
+              <ellipse cx="436" cy="58" rx="11" ry="6"/>
+            </g>
+          </defs>
+          <g class="band band--sky">
+            <use href="#bandClouds" x="-560"/><use href="#bandClouds"/><use href="#bandClouds" x="560"/>
+          </g>
+        </svg>
 
         <!-- Seasonal backdrop. Each band is drawn once and placed three times
              side by side, then slid by exactly one band width, so the loop is
@@ -281,7 +299,6 @@
             </g>
           </defs>
 
-          <rect class="backdrop__sky" x="-600" y="-60" width="1760" height="280" fill="var(--sea-sky)"/>
 
           <g class="band band--mtn">
             <use href="#bandMountains" x="-560"/><use href="#bandMountains"/><use href="#bandMountains" x="560"/>
@@ -293,9 +310,9 @@
             <use href="#bandFlora" x="-560"/><use href="#bandFlora"/><use href="#bandFlora" x="560"/>
           </g>
 
-          <!-- Dims the whole backdrop at night instead of a second palette. -->
-          <rect class="backdrop__night" x="-600" y="-60" width="1760" height="280" fill="var(--scene-night)"/>
         </svg>
+
+        <div class="scene__dusk" aria-hidden="true"></div>
 
         <div class="raccoon-container">
         <svg class="raccoon-svg" viewBox="0 0 200 200" role="img" aria-label="Dein Waschbär">
@@ -553,6 +570,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.11.0"></script>
+<script src="app.js?v=1.12.0"></script>
 </body>
 </html>

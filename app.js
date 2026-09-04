@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.12.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -481,7 +481,7 @@ function renderGait(active) {
   if (gait === 'rest') {
     // Let the stylesheet's own resting timings stand.
     scene.style.removeProperty('--step');
-    ['--road-speed', '--flora-speed', '--hill-speed', '--mtn-speed']
+    ['--road-speed', '--flora-speed', '--hill-speed', '--mtn-speed', '--sky-speed']
       .forEach((prop) => scene.style.removeProperty(prop));
     return;
   }
@@ -493,6 +493,7 @@ function renderGait(active) {
   scene.style.setProperty('--flora-speed', `${(step * 15).toFixed(2)}s`);
   scene.style.setProperty('--hill-speed', `${(step * 34).toFixed(2)}s`);
   scene.style.setProperty('--mtn-speed', `${(step * 95).toFixed(2)}s`);
+  scene.style.setProperty('--sky-speed', `${(step * 152).toFixed(2)}s`);
 }
 
 /* --- Season ---------------------------------------------------------------
