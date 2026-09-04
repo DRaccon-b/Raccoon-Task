@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.7.0">
+<link rel="stylesheet" href="styles.css?v=1.7.1">
 </head>
 <body>
 
@@ -337,17 +337,22 @@
              maxlength="200" autocomplete="off">
     </div>
 
-    <div class="field-row">
-      <div class="field">
-        <label class="field__label" for="itemIcon">Icon</label>
-        <input class="field__input" id="itemIcon" name="icon" value="🎁" maxlength="4" autocomplete="off">
-      </div>
-      <!-- 0 is allowed: a giveaway the player can just claim. -->
-      <div class="field">
-        <label class="field__label" for="itemPrice">◆ Preis</label>
-        <input class="field__input" id="itemPrice" name="price" type="number"
-               min="0" max="9999" step="1" value="10" inputmode="numeric" required>
-      </div>
+    <div class="field">
+      <span class="field__label">Icon</span>
+      <!-- Filled by app.js from a list of long-established emoji. -->
+      <div class="icon-picker" id="iconPicker"></div>
+      <input class="field__input field__input--icon" id="itemIcon" name="icon" value="🎁"
+             maxlength="16" autocomplete="off" aria-label="Eigenes Emoji">
+      <p class="field__hint">Oder ein eigenes Emoji tippen — nur das erste zählt.
+        Ganz neue Emoji kann ein älteres iPhone noch nicht zeichnen und zeigt
+        dann ein leeres Kästchen.</p>
+    </div>
+
+    <!-- 0 is allowed: a giveaway the player can just claim. -->
+    <div class="field">
+      <label class="field__label" for="itemPrice">◆ Preis in Tokens</label>
+      <input class="field__input" id="itemPrice" name="price" type="number"
+             min="0" max="9999" step="1" value="10" inputmode="numeric" required>
     </div>
 
     <button class="submit-btn submit-btn--plum" type="submit" id="shopSubmit">Artikel erstellen</button>
@@ -356,6 +361,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.7.0"></script>
+<script src="app.js?v=1.7.1"></script>
 </body>
 </html>

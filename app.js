@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -44,6 +44,16 @@ const CATEGORIES = {
     hint: 'Alltagsaufgabe. Taucht eine Woche nach dem Abhaken wieder auf.',
   },
 };
+
+/**
+ * Shop icons offered as taps. All are long-established emoji, so they render
+ * on any phone — unlike the newest Unicode additions, which show as an empty
+ * box on an OS that predates them.
+ */
+const SHOP_ICONS = [
+  '🎁', '💆', '🍿', '🛁', '🍫', '🥂', '💋', '🧸',
+  '🌹', '🍳', '☕', '🎮', '💰', '🏆', '🍑', '❤️',
+];
 
 const DEFAULT_CATEGORY = 'basic';
 const categoryOf = (quest) => CATEGORIES[quest.category] ? quest.category : DEFAULT_CATEGORY;
@@ -111,6 +121,41 @@ function formatRelativeTime(iso) {
   if (ms < 86_400_000) return `vor ${Math.floor(ms / 3_600_000)} Std.`;
   return then.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
 }
+
+/**
+ * Keep only the first character a reader actually sees. An emoji can be
+ * several code units, and a flag or family several code points, so counting
+ * characters is not enough — two pasted emoji would otherwise both land in
+ * a tile sized for one and spill out of it.
+ */
+function firstEmoji(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+
+  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    for (const { segment } of segmenter.segment(text)) return segment;
+    return '';
+  }
+
+  // Older engines: take the first code point plus anything that attaches to
+  // it — variation selectors, skin tones, and zero-width-joined parts.
+  const chars = [...text];
+  let out = chars[0];
+  let afterJoiner = false;
+  for (let i = 1; i < chars.length; i++) {
+    const cp = chars[i].codePointAt(0);
+    const attaches = afterJoiner || cp === 0xFE0F || cp === 0x200D
+      || (cp >= 0x1F3FB && cp <= 0x1F3FF);
+    if (!attaches) break;
+    out += chars[i];
+    afterJoiner = cp === 0x200D;
+  }
+  return out;
+}
+
+/** The icon to draw for a shop item, normalised and never empty. */
+const shopIcon = (item) => firstEmoji(item.icon) || DEFAULT_ICON;
 
 function emptyState(icon, text) {
   return `<div class="empty-state">
@@ -687,7 +732,7 @@ function renderShop() {
       const free = item.price === 0;
       const affordable = state.stats.tokens >= item.price;
       return `<article class="shop-item">
-        <div class="shop-item__icon" aria-hidden="true">${esc(item.icon || DEFAULT_ICON)}</div>
+        <div class="shop-item__icon" aria-hidden="true">${esc(shopIcon(item))}</div>
         <div class="shop-item__info">
           <h3 class="shop-item__name">${esc(item.name)}</h3>
           ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
@@ -706,7 +751,7 @@ function renderShop() {
     gmEl.innerHTML = emptyState('🛍️', 'Noch keine Artikel. Tippe auf + um welche hinzuzufügen!');
   } else {
     gmEl.innerHTML = state.shopItems.map((item) => `<article class="shop-item">
-      <div class="shop-item__icon" aria-hidden="true">${esc(item.icon || DEFAULT_ICON)}</div>
+      <div class="shop-item__icon" aria-hidden="true">${esc(shopIcon(item))}</div>
       <div class="shop-item__info">
         <h3 class="shop-item__name">${esc(item.name)}</h3>
         ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
@@ -878,6 +923,15 @@ async function saveQuest(form) {
   showToast(editingId ? 'Quest gespeichert!' : 'Quest erstellt!', 'success');
 }
 
+/** Highlight whichever offered icon matches what the field holds. */
+function renderIconPicker() {
+  const current = firstEmoji($('itemIcon').value);
+  $('iconPicker').innerHTML = SHOP_ICONS.map((emoji) => `
+    <button type="button" class="icon-option${emoji === current ? ' is-selected' : ''}"
+            data-action="pick-icon" data-icon="${emoji}"
+            aria-label="Icon ${emoji}">${emoji}</button>`).join('');
+}
+
 /** Open the shop sheet, empty for a new item or filled to edit one. */
 function openShopForm(item) {
   state.editingItemId = item?.id ?? null;
@@ -886,9 +940,11 @@ function openShopForm(item) {
   $('shopSubmit').textContent = item ? 'Änderungen speichern' : 'Artikel erstellen';
   $('itemName').value = item?.name ?? '';
   $('itemDesc').value = item?.description ?? '';
-  $('itemIcon').value = item?.icon ?? DEFAULT_ICON;
+  // Normalise on the way in, so editing an old two-emoji item cleans it up.
+  $('itemIcon').value = item ? shopIcon(item) : DEFAULT_ICON;
   $('itemPrice').value = item?.price ?? 10;
 
+  renderIconPicker();
   openModal('shopModal');
 }
 
@@ -901,7 +957,7 @@ async function saveShopItem(form) {
   const fields = {
     name,
     description: String(data.get('description')).trim(),
-    icon: String(data.get('icon')).trim() || DEFAULT_ICON,
+    icon: firstEmoji(data.get('icon')) || DEFAULT_ICON,
     price: Math.max(0, Number(data.get('price')) || 0),
   };
 
@@ -1161,6 +1217,10 @@ const actions = {
     const item = state.shopItems.find((s) => s.id === el.dataset.id);
     if (item) openShopForm(item);
   },
+  'pick-icon': (el) => {
+    $('itemIcon').value = el.dataset.icon;
+    renderIconPicker();
+  },
   'dismiss-levelup': () => $('levelup').classList.remove('is-open'),
   'dismiss-chest-reveal': () => dismissChestReveal(),
   'open-chest': (el) => openChest(el.dataset.id),
@@ -1251,6 +1311,9 @@ $('shopForm').addEventListener('submit', (event) => {
   event.preventDefault();
   saveShopItem(event.currentTarget);
 });
+
+// Typing a custom emoji clears the highlight on the offered ones.
+$('itemIcon').addEventListener('input', renderIconPicker);
 
 /* --- Boot ---------------------------------------------------------------- */
 
