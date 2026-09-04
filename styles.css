@@ -452,6 +452,51 @@ body[data-screen="gm"] .version {
   height: 90px;
 }
 
+/* --- Weather --------------------------------------------------------------
+   A drop is a full-height column with its leaf parked at the top. Sliding
+   that column down by its own height therefore carries the leaf exactly one
+   scene height, whatever the phone, and the sway rides along inside it. */
+.weather {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.drop { display: none; }
+.scene[data-season="autumn"] .drop--leaf { display: block; }
+
+.drop {
+  position: absolute;
+  top: calc(var(--size) * -2);
+  left: var(--x);
+  width: var(--size);
+  height: 100%;
+  animation: drop-fall var(--fall) linear var(--delay) infinite;
+}
+@keyframes drop-fall {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* The leaf itself only turns and drifts sideways; falling is the column's
+   job, so the two never fight over the same transform. */
+.drop::before {
+  content: '';
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  background: var(--tint);
+  opacity: 0.85;
+  /* A leaf: pointed at the tip and the stem, rounded along the sides. Corner
+     radii scale with the element, which path() would not. */
+  border-radius: 58% 4% 58% 4%;
+  animation: drop-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+}
+@keyframes drop-sway {
+  from { transform: translateX(-9px) rotate(-40deg); }
+  to { transform: translateX(9px) rotate(35deg); }
+}
+
 /* Lays a dusk tint over sky, clouds and scenery in one go. It sits between
    the backdrop and the road in the markup, so the road and the raccoon keep
    the colours their own dark theme already gives them. */
