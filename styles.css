@@ -512,6 +512,64 @@ body[data-screen="gm"] .version {
   box-shadow: 0 0 26px 8px rgba(206, 216, 255, 0.3);
 }
 
+/* --- Sun designs ----------------------------------------------------------
+   Four takes on the same disc, switched with data-sun on the scene. All of
+   them use --sun-face, so each one still turns red low on the horizon. */
+
+/* 2 · Strahlen: a flat ring of spokes, turning slowly. */
+.scene[data-sun="rays"] .sun {
+  background: var(--sun-face);
+  box-shadow: none;
+}
+.scene[data-sun="rays"] .sun::before {
+  content: '';
+  position: absolute;
+  inset: -25px;
+  /* Twelve wedges, with the middle masked away so they read as spokes
+     around the disc rather than a pie. */
+  background: repeating-conic-gradient(from 0deg,
+    var(--sun-face) 0 7deg, transparent 7deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 27%, #000 28%);
+  mask: radial-gradient(circle, transparent 0 27%, #000 28%);
+  animation: sun-turn 90s linear infinite;
+}
+@keyframes sun-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 3 · Ringe: hard concentric halos instead of a soft glow. */
+.scene[data-sun="ring"] .sun {
+  background: var(--sun-face);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.7),
+    0 0 0 13px rgba(255, 255, 255, 0.34),
+    0 0 0 24px rgba(255, 255, 255, 0.16);
+}
+
+/* 4 · Papierschnitt: two flat tones with one hard edge between them. */
+.scene[data-sun="cut"] .sun {
+  background: var(--sun-face);
+  box-shadow: none;
+  overflow: hidden;
+}
+/* Two circles overlapping the disc: where each one crosses the edge, the
+   parent's clipping turns it into a crescent with one hard edge. */
+.scene[data-sun="cut"] .sun::before {
+  content: '';
+  position: absolute;
+  inset: -10% 28% 28% -10%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.46);
+}
+.scene[data-sun="cut"] .sun::after {
+  content: '';
+  position: absolute;
+  inset: 40% -14% -14% 40%;
+  border-radius: 50%;
+  background: rgba(180, 90, 20, 0.16);
+}
+
 /* The whole field fades in and out together; each star only twinkles. */
 .starfield {
   position: absolute;
