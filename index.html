@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Couples Quest</title>
 
-<meta name="description" content="Quest-Spiel für zwei: Quests erledigen, leveln, Wifey Tokens einlösen.">
+<meta name="description" content="Quest-Spiel für zwei: Quests erledigen, leveln, Wifey Token einlösen.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Couples Quest">
@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.8.0">
+<link rel="stylesheet" href="styles.css?v=1.8.1">
 </head>
 <body>
 
@@ -118,7 +118,7 @@
       <div class="token-display">
         <span class="token-icon" aria-hidden="true">◆</span>
         <span class="token-count" id="playerTokens">0</span>
-        <span class="token-label">Wifey Tokens</span>
+        <span class="token-label">Wifey Token</span>
       </div>
     </div>
 
@@ -236,7 +236,7 @@
       </div>
       <div class="stat">
         <div class="stat__value stat__value--plum" id="gmTokens">0</div>
-        <div class="stat__label">Tokens</div>
+        <div class="stat__label">Token</div>
       </div>
       <div class="stat">
         <div class="stat__value stat__value--mint" id="gmOpen">0</div>
@@ -308,7 +308,7 @@
                min="0" max="9999" step="1" value="25" inputmode="numeric" required>
       </div>
       <div class="field">
-        <label class="field__label" for="questTokens">◆ Tokens</label>
+        <label class="field__label" for="questTokens">◆ Token</label>
         <input class="field__input" id="questTokens" name="tokens" type="number"
                min="0" max="9999" step="1" value="5" inputmode="numeric" required>
       </div>
@@ -350,7 +350,7 @@
 
     <!-- 0 is allowed: a giveaway the player can just claim. -->
     <div class="field">
-      <label class="field__label" for="itemPrice">◆ Preis in Tokens</label>
+      <label class="field__label" for="itemPrice">◆ Preis in Token</label>
       <input class="field__input" id="itemPrice" name="price" type="number"
              min="0" max="9999" step="1" value="10" inputmode="numeric" required>
     </div>
@@ -376,6 +376,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.8.0"></script>
+<script src="app.js?v=1.8.1"></script>
 </body>
 </html>

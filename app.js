@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -612,7 +612,7 @@ function chestCard(chest) {
       </span>
       <div class="reward-row">
         <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">⚡</span>${chest.exp_reward} EXP</span>
-        <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${chest.token_reward} Tokens</span>
+        <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${chest.token_reward} Token</span>
       </div>
     </div>
     <button class="btn btn--sm btn--confirm chest-card__open" data-action="open-chest" data-id="${chest.id}">Öffnen</button>
@@ -681,7 +681,7 @@ function questCard(quest, { forGameMaster }) {
 
   const rewards = quest.status === 'done' ? '' : `<div class="reward-row">
     <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">⚡</span>${quest.exp_reward} EXP</span>
-    <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${quest.token_reward} Tokens</span>
+    <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${quest.token_reward} Token</span>
   </div>`;
 
   // A finished recurring quest says when it comes back, so it does not read
@@ -1304,7 +1304,7 @@ async function buyItem(id) {
   const { limited, soldOut } = stockOf(item);
   if (soldOut) { showToast('Ausverkauft!', 'error'); return; }
   if (state.stats.tokens < item.price) {
-    showToast('Nicht genug Tokens!', 'error');
+    showToast('Nicht genug Token!', 'error');
     return;
   }
 
@@ -1338,7 +1338,7 @@ async function buyItem(id) {
         await sb.from('shop_items').update({ stock_left: item.stock_left }).eq('id', id);
       }
       if (error) reportError(error, 'Kauf fehlgeschlagen');
-      else showToast('Nicht genug Tokens!', 'error');
+      else showToast('Nicht genug Token!', 'error');
       return;
     }
   }
