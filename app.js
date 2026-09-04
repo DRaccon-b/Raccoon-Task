@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.19.0';
+const APP_VERSION = '1.20.0';
 
 /*
  * On the home screen, iOS usually freezes the app instead of closing it when
@@ -79,15 +79,189 @@ const RESET_PERIODS = {
 };
 
 /**
- * Free to switch — this is a preference, not a shop purchase. The colours
- * themselves live only in CSS ([data-skin="…"] on .raccoon-svg); this just
- * needs the id and a label to draw the picker.
+ * Free to switch — this is a preference, not a shop purchase. Each skin is a
+ * different animal rather than a recolour, so the picker shows an emoji
+ * instead of a colour swatch.
  */
 const SKINS = {
-  default: { label: 'Silbergrau' },
-  rotbraun: { label: 'Rotbraun' },
-  mitternacht: { label: 'Mitternacht' },
-  schnee: { label: 'Schnee' },
+  default: { label: 'Waschbär', icon: '🦝' },
+  baer: { label: 'Bär', icon: '🐻' },
+  dino: { label: 'Dino', icon: '🦕' },
+  hai: { label: 'Hai', icon: '🦈' },
+};
+
+/**
+ * The body of .raccoon-svg for each skin. All four are drawn into the same
+ * 200×200 box with the ground at y=186, so whichever one is showing stands on
+ * the road in the same place; the new animals are authored in their own,
+ * roomier coordinates and mapped in by the wrapping translate/scale.
+ *
+ * Each animal brings its own animation classes (.baer-*, .dino-*, .hai-*)
+ * because their bodies have nothing in common — a shark has no legs to swing.
+ * styles.css gives every one of them a rest, walk and run cycle keyed off the
+ * same --step that renderGait() sets, so all four speed up together.
+ *
+ * The raccoon repeats what index.html ships with, so switching back to him
+ * restores exactly the markup the page loaded with.
+ */
+const RIG_MARKUP = {
+  default: `
+    <ellipse class="raccoon-shadow" cx="100" cy="186" rx="44" ry="6"/>
+    <g class="raccoon-walker">
+      <g class="raccoon-tail">
+        <path d="M138 148 Q182 138 176 96" stroke="var(--fur)" stroke-width="22"
+              fill="none" stroke-linecap="round"/>
+        <path d="M138 148 Q182 138 176 96" stroke="var(--mask)" stroke-width="22"
+              fill="none" stroke-linecap="round" stroke-dasharray="13 15"/>
+      </g>
+      <ellipse cx="100" cy="138" rx="42" ry="36" fill="var(--fur)"/>
+      <ellipse cx="100" cy="144" rx="29" ry="26" fill="var(--fur-light)"/>
+      <ellipse class="raccoon-arm raccoon-arm--l" cx="62" cy="132" rx="10" ry="17" fill="var(--fur)" transform="rotate(-18 62 132)"/>
+      <ellipse class="raccoon-arm raccoon-arm--r" cx="138" cy="132" rx="10" ry="17" fill="var(--fur)" transform="rotate(18 138 132)"/>
+      <ellipse class="raccoon-foot raccoon-foot--l" cx="84" cy="174" rx="12" ry="8" fill="var(--fur-dark)"/>
+      <ellipse class="raccoon-foot raccoon-foot--r" cx="116" cy="174" rx="12" ry="8" fill="var(--fur-dark)"/>
+      <circle cx="70" cy="48" r="15" fill="var(--fur)"/>
+      <circle cx="70" cy="49" r="8.5" fill="var(--ear)"/>
+      <circle cx="130" cy="48" r="15" fill="var(--fur)"/>
+      <circle cx="130" cy="49" r="8.5" fill="var(--ear)"/>
+      <circle cx="100" cy="76" r="37" fill="var(--fur)"/>
+      <path d="M100 46 C 74 46, 63 60, 63 74 C 63 88, 76 96, 88 94
+               C 96 92, 96 84, 100 84 C 104 84, 104 92, 112 94
+               C 124 96, 137 88, 137 74 C 137 60, 126 46, 100 46 Z" fill="var(--mask)"/>
+      <path d="M100 44 Q94 60 96 82 L104 82 Q106 60 100 44 Z" fill="var(--fur-light)"/>
+      <ellipse cx="82" cy="54" rx="8" ry="5" fill="var(--fur-light)" opacity="0.85"/>
+      <ellipse cx="118" cy="54" rx="8" ry="5" fill="var(--fur-light)" opacity="0.85"/>
+      <ellipse cx="84" cy="72" rx="8" ry="9" fill="#fff"/>
+      <ellipse cx="116" cy="72" rx="8" ry="9" fill="#fff"/>
+      <circle cx="86" cy="71" r="4" fill="#1E1B2E"/>
+      <circle cx="118" cy="71" r="4" fill="#1E1B2E"/>
+      <circle cx="87.6" cy="69.2" r="1.7" fill="#fff"/>
+      <circle cx="119.6" cy="69.2" r="1.7" fill="#fff"/>
+      <ellipse cx="100" cy="97" rx="18" ry="13" fill="var(--fur-light)"/>
+      <ellipse cx="100" cy="91" rx="4.5" ry="3.4" fill="#1E1B2E"/>
+      <path d="M100 94 V99" stroke="#1E1B2E" stroke-width="2" stroke-linecap="round"/>
+      <path d="M92 101 Q100 107 108 101" stroke="#1E1B2E" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="74" cy="90" rx="6" ry="3.5" fill="var(--ear)" opacity="0.45"/>
+      <ellipse cx="126" cy="90" rx="6" ry="3.5" fill="var(--ear)" opacity="0.45"/>
+    </g>`,
+
+  baer: `
+    <defs>
+      <clipPath id="baerClip">
+        <path d="M54 120 C 50 96, 66 74, 94 70 C 126 66, 158 78, 172 96
+                 C 182 110, 180 130, 168 138 C 146 147, 72 147, 58 136
+                 C 52 131, 54 124, 54 120 Z"/>
+      </clipPath>
+    </defs>
+    <ellipse class="raccoon-shadow" cx="100" cy="186" rx="46" ry="6"/>
+    <g transform="translate(-3 10) scale(1.05)">
+      <g class="baer-all">
+        <ellipse cx="180" cy="116" rx="9" ry="10" fill="#6E4527"/>
+        <rect class="baer-leg baer-leg--b" x="78" y="118" width="21" height="46" rx="10.5" fill="#6E4527"/>
+        <rect class="baer-leg baer-leg--a" x="148" y="118" width="21" height="46" rx="10.5" fill="#6E4527"/>
+        <path d="M54 120 C 50 96, 66 74, 94 70 C 126 66, 158 78, 172 96
+                 C 182 110, 180 130, 168 138 C 146 147, 72 147, 58 136
+                 C 52 131, 54 124, 54 120 Z" fill="#8E5F3D"/>
+        <ellipse cx="112" cy="176" rx="62" ry="34" fill="#9A6A45" clip-path="url(#baerClip)"/>
+        <g class="baer-leg baer-leg--a">
+          <rect x="62" y="120" width="24" height="46" rx="12" fill="#8E5F3D"/>
+          <ellipse cx="74" cy="162" rx="13" ry="6.5" fill="#6E4527"/>
+          <path d="M67 162 v6 M74 163 v6 M81 162 v6" stroke="#4E301A" stroke-width="1.7" stroke-linecap="round"/>
+        </g>
+        <g class="baer-leg baer-leg--b">
+          <rect x="132" y="120" width="24" height="46" rx="12" fill="#8E5F3D"/>
+          <ellipse cx="144" cy="162" rx="13" ry="6.5" fill="#6E4527"/>
+          <path d="M137 162 v6 M144 163 v6 M151 162 v6" stroke="#4E301A" stroke-width="1.7" stroke-linecap="round"/>
+        </g>
+        <g class="baer-head">
+          <circle cx="66" cy="50" r="13" fill="#8E5F3D"/>
+          <circle cx="66" cy="51" r="6.5" fill="#6E4527"/>
+          <circle cx="52" cy="80" r="29" fill="#8E5F3D"/>
+          <ellipse cx="26" cy="89" rx="17" ry="15.5" fill="#CB9A6E"/>
+          <ellipse cx="14" cy="84" rx="6.5" ry="5.2" fill="#3B2415"/>
+          <path d="M16 92 C 22 99, 32 98, 37 92" stroke="#3B2415" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+          <ellipse cx="45" cy="73" rx="4.6" ry="5.6" fill="#2E1D11"/>
+          <circle cx="46.6" cy="70.9" r="1.6" fill="#fff"/>
+        </g>
+      </g>
+    </g>`,
+
+  dino: `
+    <ellipse class="raccoon-shadow" cx="100" cy="186" rx="44" ry="6"/>
+    <g transform="translate(-23 26) scale(0.95)">
+      <g class="dino-all">
+        <path class="dino-tail" d="M146 122 C 178 120, 202 112, 222 94
+                                   C 227 89, 232 94, 227 100
+                                   C 208 124, 180 142, 148 144 Z" fill="#8FAF8A"/>
+        <g class="dino-leg dino-leg--b">
+          <rect x="99" y="128" width="19" height="38" rx="9.5" fill="#6E9169"/>
+          <ellipse cx="108.5" cy="164" rx="11" ry="5.5" fill="#4F6A4D"/>
+        </g>
+        <g class="dino-leg dino-leg--a">
+          <rect x="152" y="128" width="19" height="38" rx="9.5" fill="#6E9169"/>
+          <ellipse cx="161.5" cy="164" rx="11" ry="5.5" fill="#4F6A4D"/>
+        </g>
+        <ellipse cx="120" cy="122" rx="52" ry="35" fill="#8FAF8A"/>
+        <ellipse cx="124" cy="133" rx="32" ry="20" fill="#C7DEC0"/>
+        <path class="dino-neck" d="M88 128 C 78 106, 62 68, 58 38" stroke="#8FAF8A"
+              stroke-width="27" fill="none" stroke-linecap="round"/>
+        <g class="dino-leg dino-leg--a">
+          <rect x="84" y="130" width="21" height="38" rx="10.5" fill="#8FAF8A"/>
+          <ellipse cx="94.5" cy="166" rx="12" ry="6" fill="#5F7D5C"/>
+        </g>
+        <g class="dino-leg dino-leg--b">
+          <rect x="136" y="130" width="21" height="38" rx="10.5" fill="#8FAF8A"/>
+          <ellipse cx="146.5" cy="166" rx="12" ry="6" fill="#5F7D5C"/>
+        </g>
+        <g class="dino-head">
+          <circle cx="56" cy="31" r="17" fill="#8FAF8A"/>
+          <ellipse cx="41" cy="37" rx="13" ry="9.5" fill="#8FAF8A"/>
+          <ellipse cx="37" cy="39" rx="7.5" ry="5.2" fill="#C7DEC0"/>
+          <circle cx="31" cy="35" r="1.6" fill="#5E8069"/>
+          <ellipse cx="53" cy="28" rx="6" ry="6.8" fill="#fff"/>
+          <circle cx="51.8" cy="27.2" r="3.2" fill="#20291F"/>
+          <circle cx="53" cy="25.8" r="1.3" fill="#fff"/>
+          <path d="M31 43 C 37 47, 45 46, 49 42" stroke="#4E6E58" stroke-width="1.9" fill="none" stroke-linecap="round"/>
+        </g>
+      </g>
+    </g>`,
+
+  hai: `
+    <defs>
+      <clipPath id="haiClip">
+        <path d="M20 80 C 40 52, 74 36, 112 38 C 150 40, 180 54, 202 74
+                 C 200 80, 200 82, 202 88 C 180 104, 150 116, 116 118
+                 C 78 122, 38 106, 20 80 Z"/>
+      </clipPath>
+    </defs>
+    <ellipse class="raccoon-shadow" cx="100" cy="186" rx="40" ry="6"/>
+    <g transform="translate(-13 20) scale(0.88)">
+      <g class="hai-all">
+        <path class="hai-tailfin" d="M186 66 C 204 54, 220 40, 234 24
+                                     C 231 48, 225 66, 217 80
+                                     C 225 94, 231 110, 235 132
+                                     C 219 118, 202 100, 186 92 Z" fill="#6B7B8A"/>
+        <path class="hai-pect hai-pect--far" d="M74 100 C 79 114, 88 126, 101 132
+                                                C 104 133, 105 131, 103 128
+                                                C 94 118, 86 108, 82 98 Z" fill="#5A6875"/>
+        <path d="M102 44 C 111 29, 124 15, 141 9 C 145 25, 152 41, 164 53 Z" fill="#6B7B8A"/>
+        <path d="M20 80 C 40 52, 74 36, 112 38 C 150 40, 180 54, 202 74
+                 C 200 80, 200 82, 202 88 C 180 104, 150 116, 116 118
+                 C 78 122, 38 106, 20 80 Z" fill="#8A9AA8"/>
+        <ellipse cx="112" cy="126" rx="94" ry="34" fill="#DCE3E8" clip-path="url(#haiClip)"/>
+        <path d="M66 70 C 63 78, 63 85, 66 92" stroke="#75858F" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M74 68 C 71 76, 71 84, 74 91" stroke="#75858F" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M82 67 C 79 75, 79 83, 82 90" stroke="#75858F" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M30 88 C 38 97, 48 98, 55 92" stroke="#3A444E" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M35.5 91.5 L 38 96 L 40.5 92.8 Z" fill="#fff"/>
+        <path d="M43 94 L 45.2 98 L 47.5 94.2 Z" fill="#fff"/>
+        <circle cx="47" cy="71" r="5.2" fill="#2B333B"/>
+        <circle cx="48.8" cy="69.2" r="1.7" fill="#fff"/>
+        <path class="hai-pect hai-pect--near" d="M84 106 C 91 121, 104 134, 120 140
+                                                 C 124 141, 125 138, 122 135
+                                                 C 111 124, 101 112, 95 102 Z" fill="#6B7B8A"/>
+      </g>
+    </g>`,
 };
 
 const DEFAULT_PERIOD = 'never';
@@ -501,17 +675,34 @@ function renderRaccoon() {
    A skin is a cosmetic preference, not a purchase: free to switch, applies
    right away, no shop involved. Held here so it's set before the sheet is
    ever opened, not only while it's visible. */
+/**
+ * A skin id saved before the wardrobe held animals (one of the old colour
+ * names) falls back to the raccoon rather than rendering an empty box.
+ */
+function currentSkin() {
+  const skin = state.stats.skin;
+  return SKINS[skin] ? skin : 'default';
+}
+
 function renderSkin() {
   const svg = document.querySelector('.raccoon-svg');
-  if (svg) svg.dataset.skin = state.stats.skin || 'default';
+  if (!svg) return;
+  const skin = currentSkin();
+  // Rebuilding on every render would restart the walk cycle mid-stride, so
+  // only touch the DOM when the skin actually changed. On load this matches
+  // what index.html already ships, and nothing is rebuilt at all.
+  if (svg.dataset.skin === skin) return;
+  svg.innerHTML = RIG_MARKUP[skin];
+  svg.dataset.skin = skin;
+  svg.setAttribute('aria-label', `Dein ${SKINS[skin].label}`);
 }
 
 function renderSkinPicker() {
-  const current = state.stats.skin || 'default';
+  const current = currentSkin();
   $('skinPicker').innerHTML = Object.entries(SKINS).map(([id, skin]) => `
     <button type="button" class="skin-option${id === current ? ' is-selected' : ''}"
             data-action="pick-skin" data-skin="${id}">
-      <span class="skin-option__swatch" aria-hidden="true"></span>
+      <span class="skin-option__icon" aria-hidden="true">${skin.icon}</span>
       <span class="skin-option__label">${skin.label}</span>
     </button>`).join('');
 }

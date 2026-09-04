@@ -54,21 +54,6 @@
   --mask: #374151;
   --ear: #F9A8D4;
 
-  /* --- Skins ---------------------------------------------------------------
-     One named colour set per skin. app.js sets data-skin on .raccoon-svg
-     from player_stats.skin; that swaps --fur etc. below. The wardrobe's own
-     swatches read the same tokens, so a colour only ever lives in one place. */
-  --skin-default-fur: #6B7280; --skin-default-fur-light: #9CA3AF;
-  --skin-default-fur-dark: #4B5563; --skin-default-mask: #374151; --skin-default-ear: #F9A8D4;
-
-  --skin-rotbraun-fur: #92572E; --skin-rotbraun-fur-light: #C08552;
-  --skin-rotbraun-fur-dark: #6B3D1F; --skin-rotbraun-mask: #4A2A15; --skin-rotbraun-ear: #F4A895;
-
-  --skin-mitternacht-fur: #3B3B47; --skin-mitternacht-fur-light: #56566A;
-  --skin-mitternacht-fur-dark: #26262E; --skin-mitternacht-mask: #17171C; --skin-mitternacht-ear: #B48EAD;
-
-  --skin-schnee-fur: #F1F0EE; --skin-schnee-fur-light: #FFFFFF;
-  --skin-schnee-fur-dark: #D8D6D2; --skin-schnee-mask: #8FA3B0; --skin-schnee-ear: #FFD9E8;
 
   /* The road the raccoon walks along */
   --road: #7A7486;
@@ -809,18 +794,6 @@ body[data-screen="gm"] .version {
   touch-action: manipulation;
 }
 .raccoon-svg { width: 100%; height: 100%; display: block; }
-.raccoon-svg[data-skin="rotbraun"] {
-  --fur: var(--skin-rotbraun-fur); --fur-light: var(--skin-rotbraun-fur-light);
-  --fur-dark: var(--skin-rotbraun-fur-dark); --mask: var(--skin-rotbraun-mask); --ear: var(--skin-rotbraun-ear);
-}
-.raccoon-svg[data-skin="mitternacht"] {
-  --fur: var(--skin-mitternacht-fur); --fur-light: var(--skin-mitternacht-fur-light);
-  --fur-dark: var(--skin-mitternacht-fur-dark); --mask: var(--skin-mitternacht-mask); --ear: var(--skin-mitternacht-ear);
-}
-.raccoon-svg[data-skin="schnee"] {
-  --fur: var(--skin-schnee-fur); --fur-light: var(--skin-schnee-fur-light);
-  --fur-dark: var(--skin-schnee-fur-dark); --mask: var(--skin-schnee-mask); --ear: var(--skin-schnee-ear);
-}
 
 /* --- Wardrobe --------------------------------------------------------------
    Skin picker: the same tier-picker card layout, but the icon is a plain
@@ -845,18 +818,7 @@ body[data-screen="gm"] .version {
 }
 .skin-option:active { transform: scale(0.96); }
 .skin-option.is-selected { border-color: var(--plum); background: var(--plum-soft); }
-.skin-option__swatch {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 0 0 1px rgba(30, 27, 46, 0.1);
-}
-.skin-option[data-skin="default"] .skin-option__swatch { background: var(--skin-default-fur); }
-.skin-option[data-skin="rotbraun"] .skin-option__swatch { background: var(--skin-rotbraun-fur); }
-.skin-option[data-skin="mitternacht"] .skin-option__swatch { background: var(--skin-mitternacht-fur); }
-.skin-option[data-skin="schnee"] .skin-option__swatch { background: var(--skin-schnee-fur); }
+.skin-option__icon { flex-shrink: 0; font-size: 26px; line-height: 1; }
 .skin-option__label {
   font-family: var(--font-display);
   font-weight: 600;
@@ -1041,6 +1003,273 @@ body[data-screen="gm"] .version {
 @keyframes shadow-run {
   0%, 50%, 100% { transform: scaleX(1); opacity: 0.95; }
   25%, 75% { transform: scaleX(0.74); opacity: 0.6; }
+}
+
+/* ── Bär ──────────────────────────────────────────────────────────────
+   A four-legged walker seen from the side, so the diagonal pairs swing
+   against each other (front-left with back-right) the way a real bear's do,
+   rather than the raccoon's upright two-legged step. */
+.baer-all {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: baer-step var(--step) ease-in-out infinite;
+}
+@keyframes baer-step {
+  0%, 50%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-1deg); }
+  75% { transform: translateY(-3px) rotate(1deg); }
+}
+
+.baer-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0;   /* pivot at the shoulder/hip, not mid-leg */
+}
+.baer-leg--a { animation: baer-swing-a var(--step) ease-in-out infinite; }
+.baer-leg--b { animation: baer-swing-b var(--step) ease-in-out infinite; }
+@keyframes baer-swing-a {
+  0%, 100% { transform: rotate(-11deg); }
+  50% { transform: rotate(11deg); }
+}
+@keyframes baer-swing-b {
+  0%, 100% { transform: rotate(11deg); }
+  50% { transform: rotate(-11deg); }
+}
+
+/* Pivots at the shoulder end of the head so the muzzle swings, not the neck. */
+.baer-head {
+  transform-box: fill-box;
+  transform-origin: 100% 65%;
+  animation: baer-nod var(--step) ease-in-out infinite;
+}
+@keyframes baer-nod {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+.scene[data-gait="rest"] .baer-all { animation: baer-breathe 3.6s ease-in-out infinite; }
+@keyframes baer-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1.5px) scaleY(1.02); }
+}
+.scene[data-gait="rest"] .baer-leg { animation: none; }
+/* Standing still he sniffs around now and then instead of nodding in time. */
+.scene[data-gait="rest"] .baer-head { animation: baer-sniff 4.8s ease-in-out infinite; }
+@keyframes baer-sniff {
+  0%, 62%, 100% { transform: rotate(0deg); }
+  72% { transform: rotate(4deg); }
+  82% { transform: rotate(1.5deg); }
+}
+
+/* Running he drops his head, leans into it and reaches much further with
+   each leg — he faces left, so the lean is a negative rotation. */
+.scene[data-gait="run"] .baer-all { animation-name: baer-run; }
+@keyframes baer-run {
+  0%, 100% { transform: translateY(-2px) rotate(-4deg); }
+  25% { transform: translateY(-10px) rotate(-6deg); }
+  50% { transform: translateY(-2px) rotate(-4deg); }
+  75% { transform: translateY(-10px) rotate(-2deg); }
+}
+.scene[data-gait="run"] .baer-leg--a { animation-name: baer-run-a; }
+.scene[data-gait="run"] .baer-leg--b { animation-name: baer-run-b; }
+@keyframes baer-run-a {
+  0%, 100% { transform: rotate(-26deg); }
+  50% { transform: rotate(24deg); }
+}
+@keyframes baer-run-b {
+  0%, 100% { transform: rotate(24deg); }
+  50% { transform: rotate(-26deg); }
+}
+.scene[data-gait="run"] .baer-head { animation-name: baer-run-nod; }
+@keyframes baer-run-nod {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(1deg); }
+}
+
+/* ── Dino ─────────────────────────────────────────────────────────────
+   Same diagonal four-legged gait as the bear, but heavier and slower, with
+   the long neck and tail swinging on a double-length cycle so they read as
+   trailing the body rather than marching with it. */
+.dino-all {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: dino-step var(--step) ease-in-out infinite;
+}
+@keyframes dino-step {
+  0%, 50%, 100% { transform: translateY(0); }
+  25%, 75% { transform: translateY(-4px); }
+}
+
+.dino-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+.dino-leg--a { animation: dino-swing-a var(--step) ease-in-out infinite; }
+.dino-leg--b { animation: dino-swing-b var(--step) ease-in-out infinite; }
+@keyframes dino-swing-a {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes dino-swing-b {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-10deg); }
+}
+
+/* Origins are percentages of each part's own box: the neck pivots where it
+   leaves the chest, the head where it meets the neck, the tail at its root. */
+.dino-neck {
+  transform-box: fill-box;
+  transform-origin: 77% 89%;
+  animation: dino-neck-sway calc(var(--step) * 2) ease-in-out infinite;
+}
+@keyframes dino-neck-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.dino-head {
+  transform-box: fill-box;
+  transform-origin: 67% 71%;
+  animation: dino-head-sway calc(var(--step) * 2) ease-in-out infinite;
+}
+@keyframes dino-head-sway {
+  0%, 100% { transform: rotate(3deg); }
+  50% { transform: rotate(-3deg); }
+}
+.dino-tail {
+  transform-box: fill-box;
+  transform-origin: 2% 55%;
+  animation: dino-tail-sway calc(var(--step) * 2) ease-in-out infinite;
+}
+@keyframes dino-tail-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.scene[data-gait="rest"] .dino-all { animation: dino-breathe 4s ease-in-out infinite; }
+@keyframes dino-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1.5px) scaleY(1.015); }
+}
+.scene[data-gait="rest"] .dino-leg { animation: none; }
+.scene[data-gait="rest"] .dino-neck { animation: dino-neck-sway 5.2s ease-in-out infinite; }
+.scene[data-gait="rest"] .dino-head { animation: dino-graze 5.2s ease-in-out infinite; }
+@keyframes dino-graze {
+  0%, 100% { transform: rotate(2deg); }
+  50% { transform: rotate(-4deg); }
+}
+.scene[data-gait="rest"] .dino-tail { animation: dino-tail-sway 6.4s ease-in-out infinite; }
+
+/* At a run the neck stretches out low and forward and the tail lifts to
+   counterweight it, the way a sauropod's would. */
+.scene[data-gait="run"] .dino-all { animation-name: dino-run; }
+@keyframes dino-run {
+  0%, 100% { transform: translateY(-2px) rotate(-3deg); }
+  25% { transform: translateY(-11px) rotate(-5deg); }
+  50% { transform: translateY(-2px) rotate(-3deg); }
+  75% { transform: translateY(-11px) rotate(-1deg); }
+}
+.scene[data-gait="run"] .dino-leg--a { animation-name: dino-run-a; }
+.scene[data-gait="run"] .dino-leg--b { animation-name: dino-run-b; }
+@keyframes dino-run-a {
+  0%, 100% { transform: rotate(-24deg); }
+  50% { transform: rotate(22deg); }
+}
+@keyframes dino-run-b {
+  0%, 100% { transform: rotate(22deg); }
+  50% { transform: rotate(-24deg); }
+}
+.scene[data-gait="run"] .dino-neck { animation-name: dino-neck-stretch; }
+@keyframes dino-neck-stretch {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(-5deg); }
+}
+.scene[data-gait="run"] .dino-head { animation-name: dino-head-forward; }
+@keyframes dino-head-forward {
+  0%, 100% { transform: rotate(8deg); }
+  50% { transform: rotate(4deg); }
+}
+.scene[data-gait="run"] .dino-tail { animation-name: dino-tail-stream; }
+@keyframes dino-tail-stream {
+  0%, 100% { transform: rotate(-13deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+/* ── Hai ──────────────────────────────────────────────────────────────
+   The shark has no legs to walk on, so his three gaits are three speeds of
+   swimming through the air instead: hovering, cruising and darting. The
+   cycles are multiples of --step so he still picks up pace with the others. */
+.hai-all {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: hai-glide calc(var(--step) * 2.6) ease-in-out infinite;
+}
+@keyframes hai-glide {
+  0%, 100% { transform: translateY(5px) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+/* Beats about twice per glide, which is what makes it read as propulsion
+   rather than the whole body just bobbing. */
+.hai-tailfin {
+  transform-box: fill-box;
+  transform-origin: 4% 52%;
+  animation: hai-tailbeat calc(var(--step) * 1.3) ease-in-out infinite;
+}
+@keyframes hai-tailbeat {
+  0%, 100% { transform: rotate(-11deg); }
+  50% { transform: rotate(11deg); }
+}
+
+.hai-pect {
+  transform-box: fill-box;
+  transform-origin: 10% 8%;
+  animation: hai-row calc(var(--step) * 2.6) ease-in-out infinite;
+}
+/* The far fin trails the near one so the pair never moves as one slab. */
+.hai-pect--far { animation-delay: calc(var(--step) * -0.4); }
+@keyframes hai-row {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(9deg); }
+}
+
+/* His shadow tracks his height rather than a footfall, so it swells and
+   fades as he rises instead of pulsing twice a stride. Each gait gets the
+   cycle of the glide it belongs to, so shadow and shark stay in step. */
+.raccoon-svg[data-skin="hai"] .raccoon-shadow {
+  animation: hai-shadow calc(var(--step) * 2.6) ease-in-out infinite;
+}
+@keyframes hai-shadow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.78); opacity: 0.55; }
+}
+
+.scene[data-gait="rest"] .hai-all { animation: hai-hover 4.4s ease-in-out infinite; }
+@keyframes hai-hover {
+  0%, 100% { transform: translateY(3px) rotate(-1.5deg); }
+  50% { transform: translateY(-5px) rotate(1.5deg); }
+}
+.scene[data-gait="rest"] .hai-tailfin { animation: hai-tailbeat 2.4s ease-in-out infinite; }
+.scene[data-gait="rest"] .hai-pect { animation: hai-row 4.4s ease-in-out infinite; }
+/* The raccoon's rest rule stops his shadow outright; the shark is still
+   hovering, so his keeps going at the hover's own pace. */
+.scene[data-gait="rest"] .raccoon-svg[data-skin="hai"] .raccoon-shadow {
+  animation: hai-shadow 4.4s ease-in-out infinite;
+}
+
+/* Darting: nose down, deeper dive between beats and the tail whipping. */
+.scene[data-gait="run"] .hai-all { animation-name: hai-dart; }
+@keyframes hai-dart {
+  0%, 100% { transform: translateY(8px) rotate(-6deg); }
+  50% { transform: translateY(-16px) rotate(6deg); }
+}
+.scene[data-gait="run"] .hai-tailfin { animation-name: hai-tailwhip; }
+@keyframes hai-tailwhip {
+  0%, 100% { transform: rotate(-20deg); }
+  50% { transform: rotate(20deg); }
+}
+.scene[data-gait="run"] .hai-pect { animation-name: hai-row-fast; }
+@keyframes hai-row-fast {
+  0%, 100% { transform: rotate(-16deg); }
+  50% { transform: rotate(16deg); }
 }
 .raccoon-mood {
   position: absolute;
