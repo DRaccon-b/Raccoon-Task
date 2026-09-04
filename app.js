@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.17.1';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -812,10 +812,11 @@ function arcAt(fraction) {
   };
 }
 
-/* Four looks for the sun; ?sun=rays picks one to try out. */
-const SUN_STYLES = ['glow', 'rays', 'ring', 'cut'];
+/* Hard concentric halos, which is the one look with no soft edge anywhere —
+   the rest of the scene has none either. ?sun=rays tries another. */
+const SUN_STYLES = ['ring', 'glow', 'rays', 'cut'];
 const SUN_STYLE = SUN_STYLES.find((name) =>
-  name === new URLSearchParams(location.search).get('sun')) ?? 'glow';
+  name === new URLSearchParams(location.search).get('sun')) ?? 'ring';
 
 function renderSky() {
   const scene = $('scene');
