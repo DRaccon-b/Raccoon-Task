@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.16.0';
+const APP_VERSION = '1.16.1';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -795,12 +795,18 @@ function skyAt(hour, [rise, set], daySky) {
 }
 
 /** Where along its arc a body stands, as [x%, y%] plus how visible it is. */
+const ARC = {
+  from: -8,     // starts and ends just off the sides, which is what keeps the
+  to: 108,      // curve broad instead of shooting up at the edges
+  ground: 92,   // below the hills, so it rises and sets behind them
+  height: 56,   // a wide shallow dome rather than a tall narrow one
+};
+
 function arcAt(fraction) {
   const t = Math.min(1, Math.max(0, fraction));
   return {
-    x: 5 + 90 * t,
-    // Sits below the hills at both ends, so it rises and sets behind them.
-    y: 88 - 76 * Math.sin(Math.PI * t),
+    x: ARC.from + (ARC.to - ARC.from) * t,
+    y: ARC.ground - ARC.height * Math.sin(Math.PI * t),
     // Fades over the last stretch rather than blinking out at the horizon.
     visible: fraction < 0 || fraction > 1 ? 0 : Math.min(1, Math.sin(Math.PI * t) * 6),
   };
@@ -834,7 +840,7 @@ function renderSky() {
   set_('--moon-opacity', (moon.visible * Math.max(sky.star, 0.25)).toFixed(3));
 
   // Low sun means a red sun; overhead it is pale gold.
-  const low = 1 - Math.min(1, Math.max(0, (88 - sun.y) / 76));
+  const low = 1 - Math.min(1, Math.max(0, (ARC.ground - sun.y) / ARC.height));
   set_('--sun-face', rgbToHex(mix(hexToRgb('#FFD166'), hexToRgb('#F4703A'), low)));
   set_('--sun-glow', `rgba(255, ${Math.round(180 - 60 * low)}, ${Math.round(120 - 60 * low)}, 0.45)`);
 }
