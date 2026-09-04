@@ -1281,7 +1281,11 @@ body[data-screen="gm"] .version {
 
 /* --- Bottom navigation --------------------------------------------------- */
 /* Anchored to the bottom of the screen rather than to the end of the page:
-   whatever the browser thinks the page height is, the bar sits on the edge. */
+   whatever the browser thinks the page height is, the bar sits on the edge.
+   Where the phone reckons that edge to be is another matter — on the home
+   screen it can sit a home-indicator's worth above the glass, and the strip
+   below was left in the page colour. The skirt below carries the bar's own
+   colour down through it. */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1299,6 +1303,16 @@ body[data-screen="gm"] .version {
   border-top: 1px solid var(--surface-border);
   box-shadow: 0 -2px 12px rgba(30, 27, 46, 0.06);
 }
+.bottom-nav::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--surface);
+}
+
 .nav-btn {
   flex: 1;
   display: flex;
