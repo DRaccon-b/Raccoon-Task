@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.8.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -55,6 +55,50 @@ const SHOP_ICONS = [
   '🌹', '🍳', '☕', '🎮', '💰', '🏆', '🍑', '❤️',
 ];
 
+/**
+ * How a limited shop item refills. `never` is a one-off: once it is gone it
+ * stays gone until the game master edits it.
+ */
+const RESET_PERIODS = {
+  never: { label: 'Einmalig', short: 'einmalig', hint: 'Ist es weg, bleibt es weg.' },
+  daily: { label: 'Täglich', short: 'täglich', hint: 'Füllt sich jede Nacht wieder auf.' },
+  weekly: { label: 'Wöchentlich', short: 'wöchentlich', hint: 'Füllt sich jeden Montag wieder auf.' },
+  monthly: { label: 'Monatlich', short: 'monatlich', hint: 'Füllt sich am Monatsersten wieder auf.' },
+};
+
+const DEFAULT_PERIOD = 'never';
+
+/**
+ * Start of the next period, so a daily item refills at midnight rather than
+ * a rolling 24 hours after whenever the app happened to be opened.
+ */
+function nextResetAt(period, from = new Date()) {
+  const at = new Date(from);
+  if (period === 'daily') {
+    at.setHours(24, 0, 0, 0);
+    return at;
+  }
+  if (period === 'weekly') {
+    at.setHours(0, 0, 0, 0);
+    at.setDate(at.getDate() + ((8 - at.getDay()) % 7 || 7)); // next Monday
+    return at;
+  }
+  if (period === 'monthly') {
+    at.setHours(0, 0, 0, 0);
+    at.setDate(1);
+    at.setMonth(at.getMonth() + 1);
+    return at;
+  }
+  return null;
+}
+
+/** Stock facts for one item, in one place — the views all ask the same thing. */
+function stockOf(item) {
+  const limited = item.stock_max != null;
+  const left = limited ? Math.max(0, item.stock_left ?? 0) : null;
+  return { limited, left, max: item.stock_max, soldOut: limited && left <= 0 };
+}
+
 const DEFAULT_CATEGORY = 'basic';
 const categoryOf = (quest) => CATEGORIES[quest.category] ? quest.category : DEFAULT_CATEGORY;
 
@@ -72,6 +116,7 @@ const state = {
   formCategory: DEFAULT_CATEGORY,
   editingQuestId: null,
   editingItemId: null,   // shop item being edited (null = new)
+  formPeriod: DEFAULT_PERIOD,  // refill rhythm picked in the shop form
   showArchive: false,    // archive section expanded in the QuestBook
 };
 
@@ -223,6 +268,36 @@ async function reviveDueQuests() {
   if (error) console.error('Wiederkehrende Quests konnten nicht erneuert werden:', error);
 }
 
+/**
+ * Refill limited shop items whose period has rolled over. Each update is
+ * filtered on the reset time it is replacing, so two phones opening at the
+ * same moment cannot refill the same item twice.
+ * Returns true when anything was refilled, so the caller re-reads the shop.
+ */
+async function refillDueStock(items) {
+  if (!sb) return false;
+  const now = Date.now();
+  const due = items.filter((item) =>
+    item.stock_max != null
+    && item.reset_period !== 'never'
+    && item.stock_reset_at
+    && new Date(item.stock_reset_at).getTime() <= now);
+
+  if (!due.length) return false;
+
+  const results = await Promise.all(due.map((item) => sb.from('shop_items')
+    .update({
+      stock_left: item.stock_max,
+      stock_reset_at: nextResetAt(item.reset_period).toISOString(),
+    })
+    .eq('id', item.id)
+    .eq('stock_reset_at', item.stock_reset_at)));
+
+  const failure = results.find((r) => r.error);
+  if (failure) console.error('Shop-Bestand konnte nicht aufgefüllt werden:', failure.error);
+  return true;
+}
+
 async function loadAll() {
   if (!sb) return;
   await reviveDueQuests();
@@ -248,6 +323,13 @@ async function loadAll() {
   state.shopItems = shop.data ?? [];
   state.history = history.data ?? [];
   state.chests = chests.data ?? [];
+
+  // Stock periods can only be judged once the items are in hand.
+  if (await refillDueStock(state.shopItems)) {
+    const { data } = await sb.from('shop_items').select('*').order('created_at', { ascending: false });
+    if (data) state.shopItems = data;
+  }
+
   renderAll();
 }
 
@@ -722,6 +804,21 @@ function renderQuests() {
   }
 }
 
+/** "1/2" plus how it refills — shown to both roles. */
+function stockMeta(item) {
+  const { limited, left, max, soldOut } = stockOf(item);
+  if (!limited) return '';
+
+  const refill = item.reset_period !== 'never'
+    ? `<span class="stock-reset">↻ ${RESET_PERIODS[item.reset_period].short}</span>`
+    : '<span class="stock-reset">einmalig</span>';
+
+  return `<div class="shop-item__meta">
+    <span class="stock${soldOut ? ' stock--empty' : ''}">${left}/${max}</span>
+    ${refill}
+  </div>`;
+}
+
 function renderShop() {
   // Player
   const playerEl = $('playerShopList');
@@ -730,16 +827,20 @@ function renderShop() {
   } else {
     playerEl.innerHTML = '<h2 class="section-title">Wifey Shop</h2>' + state.shopItems.map((item) => {
       const free = item.price === 0;
+      const { soldOut } = stockOf(item);
       const affordable = state.stats.tokens >= item.price;
-      return `<article class="shop-item">
+      const label = soldOut ? 'Leer' : free ? 'Gratis' : `◆ ${item.price}`;
+
+      return `<article class="shop-item${soldOut ? ' shop-item--empty' : ''}">
         <div class="shop-item__icon" aria-hidden="true">${esc(shopIcon(item))}</div>
         <div class="shop-item__info">
           <h3 class="shop-item__name">${esc(item.name)}</h3>
           ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
+          ${stockMeta(item)}
         </div>
-        <button class="buy-btn${free ? ' free-tag' : ''}" data-action="buy-item"
-                data-id="${item.id}"${affordable ? '' : ' disabled'}>
-          ${free ? 'Gratis' : `◆ ${item.price}`}
+        <button class="buy-btn${free && !soldOut ? ' free-tag' : ''}" data-action="buy-item"
+                data-id="${item.id}"${affordable && !soldOut ? '' : ' disabled'}>
+          ${label}
         </button>
       </article>`;
     }).join('');
@@ -755,6 +856,7 @@ function renderShop() {
       <div class="shop-item__info">
         <h3 class="shop-item__name">${esc(item.name)}</h3>
         ${item.description ? `<p class="shop-item__desc">${esc(item.description)}</p>` : ''}
+        ${stockMeta(item)}
         <div class="action-row">
           <button class="btn btn--sm btn--neutral" data-action="edit-item" data-id="${item.id}">Bearbeiten</button>
           <button class="btn btn--sm btn--danger" data-action="delete-item" data-id="${item.id}">Entfernen</button>
@@ -932,9 +1034,25 @@ function renderIconPicker() {
             aria-label="Icon ${emoji}">${emoji}</button>`).join('');
 }
 
+/**
+ * The refill choice only means something once a quantity is set, so the
+ * whole section stays hidden for an unlimited item.
+ */
+function renderPeriodPicker() {
+  const limited = $('itemStock').value.trim() !== '';
+  $('periodField').hidden = !limited;
+  if (!limited) return;
+
+  $('periodPicker').innerHTML = Object.entries(RESET_PERIODS).map(([key, period]) => `
+    <button type="button" class="segmented__option${key === state.formPeriod ? ' is-selected' : ''}"
+            data-action="pick-period" data-period="${key}">${period.label}</button>`).join('');
+  $('periodHint').textContent = RESET_PERIODS[state.formPeriod].hint;
+}
+
 /** Open the shop sheet, empty for a new item or filled to edit one. */
 function openShopForm(item) {
   state.editingItemId = item?.id ?? null;
+  state.formPeriod = RESET_PERIODS[item?.reset_period] ? item.reset_period : DEFAULT_PERIOD;
 
   $('shopModalTitle').textContent = item ? 'Artikel bearbeiten' : 'Neuer Shop-Artikel';
   $('shopSubmit').textContent = item ? 'Änderungen speichern' : 'Artikel erstellen';
@@ -943,8 +1061,10 @@ function openShopForm(item) {
   // Normalise on the way in, so editing an old two-emoji item cleans it up.
   $('itemIcon').value = item ? shopIcon(item) : DEFAULT_ICON;
   $('itemPrice').value = item?.price ?? 10;
+  $('itemStock').value = item?.stock_max ?? '';
 
   renderIconPicker();
+  renderPeriodPicker();
   openModal('shopModal');
 }
 
@@ -954,14 +1074,41 @@ async function saveShopItem(form) {
   const name = String(data.get('name')).trim();
   if (!name) { showToast('Bitte einen Namen eingeben', 'error'); return; }
 
+  const editingId = state.editingItemId;
+  const previous = editingId ? state.shopItems.find((s) => s.id === editingId) : null;
+
+  const rawStock = String(data.get('stock')).trim();
+  const stockMax = rawStock === '' ? null : Math.max(0, Math.round(Number(rawStock) || 0));
+  const period = stockMax == null ? 'never' : state.formPeriod;
+
+  // Editing a name or price must not silently restock what the player has
+  // already spent, so the count is only reset when the quantity itself
+  // changes (or the item was unlimited until now).
+  let stockLeft = null;
+  if (stockMax != null) {
+    stockLeft = previous && previous.stock_max === stockMax
+      ? Math.min(previous.stock_left ?? stockMax, stockMax)
+      : stockMax;
+  }
+
+  // Likewise keep a running period's deadline instead of restarting it.
+  let resetAt = null;
+  if (stockMax != null && period !== 'never') {
+    resetAt = previous && previous.reset_period === period && previous.stock_reset_at
+      ? previous.stock_reset_at
+      : nextResetAt(period).toISOString();
+  }
+
   const fields = {
     name,
     description: String(data.get('description')).trim(),
     icon: firstEmoji(data.get('icon')) || DEFAULT_ICON,
     price: Math.max(0, Number(data.get('price')) || 0),
+    stock_max: stockMax,
+    stock_left: stockLeft,
+    reset_period: period,
+    stock_reset_at: resetAt,
   };
-
-  const editingId = state.editingItemId;
   const { error } = editingId
     ? await sb.from('shop_items').update(fields).eq('id', editingId)
     : await sb.from('shop_items').insert(fields);
@@ -1153,25 +1300,45 @@ async function buyItem(id) {
 
   const item = state.shopItems.find((s) => s.id === id);
   if (!item) return;
+
+  const { limited, soldOut } = stockOf(item);
+  if (soldOut) { showToast('Ausverkauft!', 'error'); return; }
   if (state.stats.tokens < item.price) {
     showToast('Nicht genug Tokens!', 'error');
     return;
+  }
+
+  // Claim the stock first: it is the scarcer resource, and gte() makes the
+  // "is one left" check part of the write, so two quick taps cannot take
+  // the same last item.
+  if (limited) {
+    const { data, error } = await sb.from('shop_items')
+      .update({ stock_left: item.stock_left - 1 })
+      .eq('id', id).gte('stock_left', 1)
+      .select();
+
+    if (error) { reportError(error, 'Kauf fehlgeschlagen'); return; }
+    if (!data || data.length === 0) { showToast('Ausverkauft!', 'error'); return; }
   }
 
   // A free item costs nothing, so there is no balance to guard — skip
   // straight to logging it.
   if (item.price > 0) {
     const remaining = state.stats.tokens - item.price;
-    // gte() makes the balance check part of the write, so two quick taps
-    // cannot spend the same tokens twice.
     const { data, error } = await sb.from('player_stats')
       .update({ tokens: remaining, updated_at: new Date().toISOString() })
       .eq('id', 1).gte('tokens', item.price)
       .select();
 
-    if (error) { reportError(error, 'Kauf fehlgeschlagen'); return; }
-    if (!data || data.length === 0) {
-      showToast('Nicht genug Tokens!', 'error');
+    const paid = !error && data && data.length > 0;
+    if (!paid) {
+      // Put the claimed stock back rather than swallowing it for a purchase
+      // that never happened.
+      if (limited) {
+        await sb.from('shop_items').update({ stock_left: item.stock_left }).eq('id', id);
+      }
+      if (error) reportError(error, 'Kauf fehlgeschlagen');
+      else showToast('Nicht genug Tokens!', 'error');
       return;
     }
   }
@@ -1220,6 +1387,10 @@ const actions = {
   'pick-icon': (el) => {
     $('itemIcon').value = el.dataset.icon;
     renderIconPicker();
+  },
+  'pick-period': (el) => {
+    state.formPeriod = el.dataset.period;
+    renderPeriodPicker();
   },
   'dismiss-levelup': () => $('levelup').classList.remove('is-open'),
   'dismiss-chest-reveal': () => dismissChestReveal(),
@@ -1314,6 +1485,10 @@ $('shopForm').addEventListener('submit', (event) => {
 
 // Typing a custom emoji clears the highlight on the offered ones.
 $('itemIcon').addEventListener('input', renderIconPicker);
+
+// A quantity is what makes the refill choice meaningful, so it appears and
+// disappears with the field.
+$('itemStock').addEventListener('input', renderPeriodPicker);
 
 /* --- Boot ---------------------------------------------------------------- */
 

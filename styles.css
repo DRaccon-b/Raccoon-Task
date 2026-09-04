@@ -919,6 +919,57 @@ body[data-screen="gm"] .version {
   color: var(--ink-muted);
 }
 
+/* --- Stock ---------------------------------------------------------------- */
+.shop-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.stock {
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--mint-soft);
+  color: var(--mint-deep);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.stock--empty { background: var(--rose-soft); color: var(--rose); }
+.stock-reset { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+
+/* Sold out: the row recedes, but its text stays readable. */
+.shop-item--empty { background: var(--surface-raised); box-shadow: none; }
+.shop-item--empty .shop-item__icon { filter: grayscale(1); opacity: 0.5; }
+.shop-item--empty .shop-item__name { color: var(--ink-muted); }
+
+/* --- Segmented control ---------------------------------------------------- */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.segmented__option {
+  padding: 10px 8px;
+  border: 2px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.15s;
+}
+.segmented__option:active { transform: scale(0.96); }
+.segmented__option.is-selected {
+  border-color: var(--plum);
+  background: var(--plum-soft);
+  color: var(--plum);
+}
+
 /* --- Icon picker (shop form) ---------------------------------------------- */
 .icon-picker {
   display: grid;

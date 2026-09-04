@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.7.1">
+<link rel="stylesheet" href="styles.css?v=1.8.0">
 </head>
 <body>
 
@@ -355,12 +355,27 @@
              min="0" max="9999" step="1" value="10" inputmode="numeric" required>
     </div>
 
+    <div class="field">
+      <label class="field__label" for="itemStock">Menge</label>
+      <input class="field__input" id="itemStock" name="stock" type="number"
+             min="0" max="999" step="1" placeholder="leer = unbegrenzt" inputmode="numeric">
+      <p class="field__hint">Leer lassen für unbegrenzt. Sonst zählt der Shop
+        herunter (z.&nbsp;B. 2/2 → 1/2) und graut den Artikel bei 0 aus.</p>
+    </div>
+
+    <!-- Only meaningful with a quantity; app.js hides it otherwise. -->
+    <div class="field" id="periodField" hidden>
+      <span class="field__label">Auffüllen</span>
+      <div class="segmented" id="periodPicker"></div>
+      <p class="field__hint" id="periodHint"></p>
+    </div>
+
     <button class="submit-btn submit-btn--plum" type="submit" id="shopSubmit">Artikel erstellen</button>
   </form>
 </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.7.1"></script>
+<script src="app.js?v=1.8.0"></script>
 </body>
 </html>
