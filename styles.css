@@ -171,6 +171,9 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* 72px of bar plus whatever the home indicator needs. The views reserve
+     exactly this much at their foot, since the bar floats over them. */
+  --nav-h: calc(var(--safe-bottom) + 72px);
 }
 
 html {
@@ -184,12 +187,12 @@ body {
   color: var(--ink);
   max-width: 430px;
   margin: 0 auto;
-  /* A definite height, not just a floor. With min-height alone Safari does
-     not reliably stretch the flex chain below it on the first layout, which
-     left the tab bar hanging short of the bottom until something forced a
-     reflow. Everything tall scrolls inside its own panel anyway. */
-  height: 100vh;
+  /* On the home screen 100dvh comes out shorter than the screen actually is,
+     which left a strip of nothing under the tab bar. app.js therefore measures
+     the window and puts the answer in --shell-h; the unit is only the value
+     used for the first paint, before that measurement lands. */
   height: 100dvh;
+  height: var(--shell-h, 100dvh);
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
@@ -1277,9 +1280,16 @@ body[data-screen="gm"] .version {
 }
 
 /* --- Bottom navigation --------------------------------------------------- */
+/* Anchored to the bottom of the screen rather than to the end of the page:
+   whatever the browser thinks the page height is, the bar sits on the edge. */
 .bottom-nav {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  width: 100%;
+  max-width: 430px;
   display: flex;
   gap: 4px;
   /* The bottom padding carries the bar's own background down through the
@@ -1319,6 +1329,8 @@ body[data-screen="gm"] .version {
   flex: 1;
   min-height: 0;   /* without this it grows past the screen instead of scrolling */
   flex-direction: column;
+  /* Room for the bar, which floats over the foot of every view. */
+  padding-bottom: var(--nav-h);
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }

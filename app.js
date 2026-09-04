@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.17.3';
+const APP_VERSION = '1.17.4';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -642,6 +642,21 @@ function notify(event, name = '', to) {
   if (!sb) return;
   sb.functions.invoke('notify', { body: { event, name, to } })
     .catch((err) => console.error('Mitteilung nicht verschickt', err));
+}
+
+/* --- Shell height ---------------------------------------------------------
+   Added to the home screen, the app is handed a viewport height short of the
+   real screen, and 100dvh with it — which left a strip of nothing under the
+   tab bar. window.innerHeight is the honest number, so the shell is sized
+   from that instead. */
+function trackShellHeight() {
+  const apply = () =>
+    document.documentElement.style.setProperty('--shell-h', `${window.innerHeight}px`);
+
+  apply();
+  window.addEventListener('resize', apply);
+  // The rotation is not finished when the event fires, so measure just after.
+  window.addEventListener('orientationchange', () => setTimeout(apply, 120));
 }
 
 /* --- Season ---------------------------------------------------------------
@@ -1945,8 +1960,9 @@ function start() {
     console.error('supabase-js konnte nicht geladen werden.');
   }
 
-  // Set before anything else paints, so the backdrop never flashes the wrong
-  // season on the way in.
+  // All three decide how the very first frame looks, so they run before
+  // anything else paints.
+  trackShellHeight();
   buildStars();
   renderSeason();
   // The sky only creeps, so once a minute is plenty; coming back to the app
