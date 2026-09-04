@@ -54,6 +54,13 @@
   --mask: #374151;
   --ear: #F9A8D4;
 
+  /* The road the raccoon walks along */
+  --road: #7A7486;
+  --road-edge: #9A94A6;
+  --road-line: #FBF8F3;
+  --scene-bush: #DFD6C6;
+  --road-shadow: rgba(30, 27, 46, 0.28);
+
   --shadow-sm: 0 1px 3px rgba(30, 27, 46, 0.06);
   --shadow-md: 0 4px 12px rgba(30, 27, 46, 0.08);
   --shadow-lg: 0 8px 24px rgba(30, 27, 46, 0.12);
@@ -89,6 +96,12 @@
     --cat-divine-bg: #443415;
     --cat-divine-ink: #F5DA9C;
 
+    --road: #3A3550;
+    --road-edge: #4E4768;
+    --road-line: #9C94BC;
+    --scene-bush: #262038;
+    --road-shadow: rgba(0, 0, 0, 0.4);
+
     --ink: #F0ECF9;
     --ink-secondary: #B8B3CC;
     --ink-muted: #7A7590;
@@ -123,6 +136,12 @@
   --cat-divine: #E8BC55;
   --cat-divine-bg: #443415;
   --cat-divine-ink: #F5DA9C;
+
+  --road: #3A3550;
+  --road-edge: #4E4768;
+  --road-line: #9C94BC;
+  --scene-bush: #262038;
+  --road-shadow: rgba(0, 0, 0, 0.4);
 
   --ink: #F0ECF9;
   --ink-secondary: #B8B3CC;
@@ -389,8 +408,142 @@ body[data-screen="gm"] .version {
   padding: 20px;
   min-height: 280px;
 }
-.raccoon-container { position: relative; width: 200px; height: 200px; }
-.raccoon-svg { width: 100%; height: 100%; animation: raccoon-idle 3s ease-in-out infinite; }
+/* --- Walking scene --------------------------------------------------------
+   The raccoon stays put and the world slides right, which reads as walking
+   left. One step cycle drives the legs, the body bob and the tail, so they
+   stay in sync; the road and bushes run at their own speeds for depth. */
+.scene {
+  position: relative;
+  width: calc(100% + 40px);
+  margin-inline: -20px;   /* full-bleed, so the road runs off both edges */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scene__bushes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 34px;          /* rests on the far edge of the road */
+  height: 30px;
+  background-image: radial-gradient(circle at 50% 100%, var(--scene-bush) 0 15px, transparent 15px);
+  background-size: 74px 30px;
+  background-repeat: repeat-x;
+  animation: scene-scroll 9s linear infinite;
+}
+
+.road {
+  position: relative;
+  width: 100%;
+  height: 34px;
+  background: var(--road);
+  border-top: 3px solid var(--road-edge);
+  overflow: hidden;
+}
+.road__dashes {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  margin-top: -2px;
+  background-image: repeating-linear-gradient(
+    90deg, var(--road-line) 0 22px, transparent 22px 52px);
+  animation: road-scroll 1.15s linear infinite;
+}
+
+/* Both scroll the pattern by exactly one period, so the loop is seamless. */
+@keyframes road-scroll {
+  from { background-position-x: 0; }
+  to { background-position-x: 52px; }
+}
+@keyframes scene-scroll {
+  from { background-position-x: 0; }
+  to { background-position-x: 74px; }
+}
+
+/* Pulled down over the road's top edge so he stands on it rather than
+   hovering above it; the raised layer keeps him in front of the asphalt. */
+.raccoon-container {
+  position: relative;
+  z-index: 1;
+  width: 200px;
+  height: 200px;
+  margin-bottom: -24px;
+}
+.raccoon-svg { width: 100%; height: 100%; display: block; }
+
+/* The whole animal above the ground rises and dips with each step. */
+.raccoon-walker {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: raccoon-step 0.62s ease-in-out infinite;
+}
+@keyframes raccoon-step {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-1.2deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-4px) rotate(1.2deg); }
+}
+
+/* The shadow stays on the road and only tightens as he lifts. */
+.raccoon-shadow {
+  fill: var(--road-shadow);
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: shadow-step 0.62s ease-in-out infinite;
+}
+@keyframes shadow-step {
+  0%, 50%, 100% { transform: scaleX(1); opacity: 1; }
+  25%, 75% { transform: scaleX(0.88); opacity: 0.8; }
+}
+
+/* Legs alternate half a cycle apart, and the arms swing against them.
+   A CSS transform replaces the element's transform attribute outright, so
+   the arms' resting tilt (-18°/+18°) is folded into their keyframes. */
+.raccoon-foot {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+.raccoon-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 0;   /* pivot at the shoulder, not the middle */
+}
+.raccoon-foot--l { animation: step-front 0.62s ease-in-out infinite; }
+.raccoon-foot--r { animation: step-back 0.62s ease-in-out infinite; }
+.raccoon-arm--l { animation: swing-left 0.62s ease-in-out infinite; }
+.raccoon-arm--r { animation: swing-right 0.62s ease-in-out infinite; }
+
+/* Mostly a lift: a wider stride would swing the feet across each other
+   into a single blob, since they sit only 32px apart. */
+@keyframes step-front {
+  0%, 100% { transform: translate(3px, 0); }
+  50% { transform: translate(-3px, -7px); }
+}
+@keyframes step-back {
+  0%, 100% { transform: translate(-3px, -7px); }
+  50% { transform: translate(3px, 0); }
+}
+@keyframes swing-left {
+  0%, 100% { transform: rotate(-28deg); }
+  50% { transform: rotate(-8deg); }
+}
+@keyframes swing-right {
+  0%, 100% { transform: rotate(8deg); }
+  50% { transform: rotate(28deg); }
+}
+
+/* The tail counterweights the walk. */
+.raccoon-tail {
+  transform-box: fill-box;
+  transform-origin: 8% 92%;   /* where it meets the body */
+  animation: tail-sway 1.24s ease-in-out infinite;
+}
+@keyframes tail-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(6deg); }
+}
 .raccoon-mood {
   position: absolute;
   top: 10px;
@@ -407,10 +560,6 @@ body[data-screen="gm"] .version {
   text-wrap: balance;
 }
 
-@keyframes raccoon-idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
 @keyframes mood-float {
   0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 1; }
   50% { transform: translateY(-12px) rotate(5deg); opacity: 0.8; }
