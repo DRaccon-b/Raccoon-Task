@@ -856,6 +856,29 @@ body[data-screen="gm"] .version {
   color: var(--ink-muted);
 }
 
+/* --- Archive ------------------------------------------------------------- */
+.archive-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 16px;
+  border: 1px dashed var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s, color 0.2s;
+}
+.archive-toggle:hover { background: var(--surface-raised); color: var(--ink-secondary); }
+.archive-toggle:active { transform: scale(0.98); }
+.archive-toggle__chevron { font-size: 11px; }
+
 /* --- Tier picker (quest form) -------------------------------------------- */
 .tier-picker {
   display: grid;

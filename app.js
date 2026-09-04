@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -62,6 +62,7 @@ const state = {
   formCategory: DEFAULT_CATEGORY,
   editingQuestId: null,
   editingItemId: null,   // shop item being edited (null = new)
+  showArchive: false,    // archive section expanded in the QuestBook
 };
 
 /** A level-up queued behind the chest-reveal overlay, shown once it closes. */
@@ -170,6 +171,7 @@ async function reviveDueQuests() {
   const { error } = await sb.from('quests')
     .update({ status: 'active', completed_at: null, resets_at: null })
     .eq('status', 'done')
+    .is('archived_at', null)
     .not('resets_at', 'is', null)
     .lte('resets_at', new Date().toISOString());
 
@@ -523,10 +525,18 @@ function questCard(quest, { forGameMaster }) {
       <button class="btn btn--sm btn--neutral" data-action="edit-quest" data-id="${quest.id}">Bearbeiten</button>
       <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
     </div>`;
+  } else if (forGameMaster && quest.status === 'done' && quest.archived_at) {
+    // Filed away: it can come back out, or be reused as a template.
+    actions = `<div class="action-row">
+      <button class="btn btn--sm btn--neutral" data-action="repost-quest" data-id="${quest.id}">Erneut stellen</button>
+      <button class="btn btn--sm btn--neutral" data-action="unarchive-quest" data-id="${quest.id}">Zurückholen</button>
+      <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
+    </div>`;
   } else if (forGameMaster && quest.status === 'done') {
     // A finished quest doubles as a template for the next round.
     actions = `<div class="action-row">
       <button class="btn btn--sm btn--neutral" data-action="repost-quest" data-id="${quest.id}">Erneut stellen</button>
+      <button class="btn btn--sm btn--neutral" data-action="archive-quest" data-id="${quest.id}">Archivieren</button>
       <button class="btn btn--sm btn--danger" data-action="delete-quest" data-id="${quest.id}">Löschen</button>
     </div>`;
   } else if (!forGameMaster && quest.status === 'active') {
@@ -541,10 +551,14 @@ function questCard(quest, { forGameMaster }) {
   </div>`;
 
   // A finished recurring quest says when it comes back, so it does not
-  // read as simply gone.
-  const repeat = quest.status === 'done' && quest.resets_at
-    ? `<span class="repeat-note">↻ ${formatReturn(quest.resets_at)}</span>`
-    : '';
+  // read as simply gone. Archiving stops the recurrence, so an archived
+  // one says that instead of promising a return.
+  let repeat = '';
+  if (quest.status === 'done' && quest.archived_at) {
+    repeat = '<span class="repeat-note">📦 Archiviert</span>';
+  } else if (quest.status === 'done' && quest.resets_at) {
+    repeat = `<span class="repeat-note">↻ ${formatReturn(quest.resets_at)}</span>`;
+  }
 
   return `<article class="quest-card${quest.status === 'done' ? ' quest-card--muted' : ''}" data-cat="${cat}">
     <div class="quest-card__head">
@@ -581,7 +595,9 @@ function byTier(a, b) {
 function renderQuests() {
   const active = state.quests.filter((q) => q.status === 'active').sort(byTier);
   const pending = state.quests.filter((q) => q.status === 'pending_confirm').sort(byTier);
-  const done = state.quests.filter((q) => q.status === 'done');
+  // Archived quests leave both lists and live in the game master's archive.
+  const done = state.quests.filter((q) => q.status === 'done' && !q.archived_at);
+  const archived = state.quests.filter((q) => q.archived_at);
 
   // Player
   const playerEl = $('playerQuestList');
@@ -606,9 +622,7 @@ function renderQuests() {
 
   // Game master
   const gmEl = $('gmQuestsPanel');
-  if (state.quests.length === 0) {
-    gmEl.innerHTML = emptyState('📜', 'Noch keine Quests erstellt. Tippe auf + um loszulegen!');
-  } else {
+  {
     let html = '';
     if (pending.length) {
       html += '<h2 class="section-title section-title--alert">🔔 Bestätigung ausstehend</h2>';
@@ -621,6 +635,23 @@ function renderQuests() {
     if (done.length) {
       html += '<h2 class="section-title section-title--muted">Erledigt</h2>';
       html += done.slice(0, 5).map((q) => questCard(q, { forGameMaster: true })).join('');
+    }
+    // Nothing on the board — say so above the archive rather than leaving
+    // a lone toggle looking like a broken screen.
+    if (!html) {
+      html += emptyState('📜', archived.length
+        ? 'Nichts offen — alles liegt im Archiv. Tippe auf + für eine neue Quest.'
+        : 'Noch keine Quests erstellt. Tippe auf + um loszulegen!');
+    }
+    if (archived.length) {
+      html += `<button class="archive-toggle" data-action="toggle-archive"
+                       aria-expanded="${state.showArchive}">
+        <span>📦 Archiv (${archived.length})</span>
+        <span class="archive-toggle__chevron">${state.showArchive ? '▲' : '▼'}</span>
+      </button>`;
+      if (state.showArchive) {
+        html += archived.map((q) => questCard(q, { forGameMaster: true })).join('');
+      }
     }
     gmEl.innerHTML = html;
   }
@@ -1004,6 +1035,28 @@ async function denyQuest(id) {
   showToast('Zurückgewiesen', 'info');
 }
 
+/**
+ * File a finished quest away. It leaves both quest lists but is kept, and
+ * clearing `resets_at` stops a recurring quest from coming back — putting
+ * it away is what the game master meant.
+ */
+async function archiveQuest(id) {
+  if (!requireDb()) return;
+  const { error } = await sb.from('quests')
+    .update({ archived_at: new Date().toISOString(), resets_at: null })
+    .eq('id', id).eq('status', 'done');
+
+  if (error) { reportError(error, 'Quest konnte nicht archiviert werden'); return; }
+  showToast('Archiviert', 'info');
+}
+
+async function unarchiveQuest(id) {
+  if (!requireDb()) return;
+  const { error } = await sb.from('quests').update({ archived_at: null }).eq('id', id);
+  if (error) { reportError(error, 'Quest konnte nicht zurückgeholt werden'); return; }
+  showToast('Zurück in der Liste', 'info');
+}
+
 async function deleteQuest(id) {
   if (!requireDb()) return;
   const { error } = await sb.from('quests').delete().eq('id', id);
@@ -1080,6 +1133,9 @@ const actions = {
     const quest = state.quests.find((q) => q.id === el.dataset.id);
     if (quest) openQuestForm(quest, { asTemplate: true });
   },
+  'archive-quest': (el) => archiveQuest(el.dataset.id),
+  'unarchive-quest': (el) => unarchiveQuest(el.dataset.id),
+  'toggle-archive': () => { state.showArchive = !state.showArchive; renderQuests(); },
   'edit-item': (el) => {
     const item = state.shopItems.find((s) => s.id === el.dataset.id);
     if (item) openShopForm(item);
