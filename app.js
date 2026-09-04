@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -164,14 +164,14 @@ function reportError(error, fallback) {
 /**
  * Put recurring quests back on the board once their week is up. The filter
  * does the deciding, so both devices can run this and the second one is a
- * no-op rather than a double reset.
+ * no-op rather than a double reset. A quest that was filed away comes back
+ * out with it — being archived tidies it, it does not cancel it.
  */
 async function reviveDueQuests() {
   if (!sb) return;
   const { error } = await sb.from('quests')
-    .update({ status: 'active', completed_at: null, resets_at: null })
+    .update({ status: 'active', completed_at: null, resets_at: null, archived_at: null })
     .eq('status', 'done')
-    .is('archived_at', null)
     .not('resets_at', 'is', null)
     .lte('resets_at', new Date().toISOString());
 
@@ -543,6 +543,13 @@ function questCard(quest, { forGameMaster }) {
     actions = `<div class="action-row">
       <button class="btn btn--block btn--confirm" data-action="submit-quest" data-id="${quest.id}">✓ Erledigt!</button>
     </div>`;
+  } else if (!forGameMaster && quest.status === 'done') {
+    // The player tidies their own log; the same archive both roles share.
+    actions = `<div class="action-row">
+      <button class="btn btn--sm btn--neutral"
+              data-action="${quest.archived_at ? 'unarchive-quest' : 'archive-quest'}"
+              data-id="${quest.id}">${quest.archived_at ? 'Zurückholen' : 'Archivieren'}</button>
+    </div>`;
   }
 
   const rewards = quest.status === 'done' ? '' : `<div class="reward-row">
@@ -550,14 +557,14 @@ function questCard(quest, { forGameMaster }) {
     <span class="reward-chip"><span class="reward-chip__icon" aria-hidden="true">◆</span>${quest.token_reward} Tokens</span>
   </div>`;
 
-  // A finished recurring quest says when it comes back, so it does not
-  // read as simply gone. Archiving stops the recurrence, so an archived
-  // one says that instead of promising a return.
+  // A finished recurring quest says when it comes back, so it does not read
+  // as simply gone — that still holds once it is archived, since filing it
+  // away does not cancel the return.
   let repeat = '';
-  if (quest.status === 'done' && quest.archived_at) {
-    repeat = '<span class="repeat-note">📦 Archiviert</span>';
-  } else if (quest.status === 'done' && quest.resets_at) {
+  if (quest.status === 'done' && quest.resets_at) {
     repeat = `<span class="repeat-note">↻ ${formatReturn(quest.resets_at)}</span>`;
+  } else if (quest.status === 'done' && quest.archived_at) {
+    repeat = '<span class="repeat-note">📦 Archiviert</span>';
   }
 
   return `<article class="quest-card${quest.status === 'done' ? ' quest-card--muted' : ''}" data-cat="${cat}">
@@ -586,6 +593,24 @@ function formatReturn(iso) {
   return `in ${days} Tagen wieder`;
 }
 
+/**
+ * The collapsible archive, shared by both quest lists. Both roles see the
+ * same archive — it is one board, so tidying it away tidies it for both.
+ */
+function archiveSection(archived, { forGameMaster }) {
+  if (!archived.length) return '';
+
+  const cards = state.showArchive
+    ? archived.map((q) => questCard(q, { forGameMaster })).join('')
+    : '';
+
+  return `<button class="archive-toggle" data-action="toggle-archive"
+                  aria-expanded="${state.showArchive}">
+    <span>📦 Archiv (${archived.length})</span>
+    <span class="archive-toggle__chevron">${state.showArchive ? '▲' : '▼'}</span>
+  </button>${cards}`;
+}
+
 /** Rarest and most urgent first, then newest. */
 function byTier(a, b) {
   const diff = CATEGORIES[categoryOf(a)].rank - CATEGORIES[categoryOf(b)].rank;
@@ -601,9 +626,7 @@ function renderQuests() {
 
   // Player
   const playerEl = $('playerQuestList');
-  if (state.quests.length === 0) {
-    playerEl.innerHTML = emptyState('📜', 'Noch keine Quests. Dein Game Master muss dir erst welche erstellen!');
-  } else {
+  {
     let html = '';
     if (active.length) {
       html += '<h2 class="section-title">Aktive Quests</h2>';
@@ -617,6 +640,12 @@ function renderQuests() {
       html += '<h2 class="section-title section-title--muted">Erledigt</h2>';
       html += done.slice(0, 10).map((q) => questCard(q, { forGameMaster: false })).join('');
     }
+    if (!html) {
+      html += emptyState('📜', archived.length
+        ? 'Nichts offen — alles liegt im Archiv.'
+        : 'Noch keine Quests. Dein Game Master muss dir erst welche erstellen!');
+    }
+    html += archiveSection(archived, { forGameMaster: false });
     playerEl.innerHTML = html;
   }
 
@@ -643,16 +672,7 @@ function renderQuests() {
         ? 'Nichts offen — alles liegt im Archiv. Tippe auf + für eine neue Quest.'
         : 'Noch keine Quests erstellt. Tippe auf + um loszulegen!');
     }
-    if (archived.length) {
-      html += `<button class="archive-toggle" data-action="toggle-archive"
-                       aria-expanded="${state.showArchive}">
-        <span>📦 Archiv (${archived.length})</span>
-        <span class="archive-toggle__chevron">${state.showArchive ? '▲' : '▼'}</span>
-      </button>`;
-      if (state.showArchive) {
-        html += archived.map((q) => questCard(q, { forGameMaster: true })).join('');
-      }
-    }
+    html += archiveSection(archived, { forGameMaster: true });
     gmEl.innerHTML = html;
   }
 }
@@ -1036,14 +1056,15 @@ async function denyQuest(id) {
 }
 
 /**
- * File a finished quest away. It leaves both quest lists but is kept, and
- * clearing `resets_at` stops a recurring quest from coming back — putting
- * it away is what the game master meant.
+ * File a finished quest away. It only tidies it out of the lists — the
+ * return date is left alone, so a weekly quest still comes back on time
+ * (and unarchives itself when it does). Ending a recurrence is deleting
+ * the quest or moving it off the Basic tier, not filing it away.
  */
 async function archiveQuest(id) {
   if (!requireDb()) return;
   const { error } = await sb.from('quests')
-    .update({ archived_at: new Date().toISOString(), resets_at: null })
+    .update({ archived_at: new Date().toISOString() })
     .eq('id', id).eq('status', 'done');
 
   if (error) { reportError(error, 'Quest konnte nicht archiviert werden'); return; }
