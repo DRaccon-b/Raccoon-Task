@@ -419,6 +419,12 @@ body[data-screen="gm"] .version {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  /* One step drives everything; app.js overrides these per gait so the
+     ground always keeps pace with the legs. */
+  --step: 0.62s;
+  --road-speed: 1.18s;
+  --bush-speed: 9.3s;
 }
 
 .scene__bushes {
@@ -430,7 +436,7 @@ body[data-screen="gm"] .version {
   background-image: radial-gradient(circle at 50% 100%, var(--scene-bush) 0 15px, transparent 15px);
   background-size: 74px 30px;
   background-repeat: repeat-x;
-  animation: scene-scroll 9s linear infinite;
+  animation: scene-scroll var(--bush-speed) linear infinite;
 }
 
 .road {
@@ -450,7 +456,7 @@ body[data-screen="gm"] .version {
   margin-top: -2px;
   background-image: repeating-linear-gradient(
     90deg, var(--road-line) 0 22px, transparent 22px 52px);
-  animation: road-scroll 1.15s linear infinite;
+  animation: road-scroll var(--road-speed) linear infinite;
 }
 
 /* Both scroll the pattern by exactly one period, so the loop is seamless. */
@@ -478,7 +484,7 @@ body[data-screen="gm"] .version {
 .raccoon-walker {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: raccoon-step 0.62s ease-in-out infinite;
+  animation: raccoon-step var(--step) ease-in-out infinite;
 }
 @keyframes raccoon-step {
   0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -492,7 +498,7 @@ body[data-screen="gm"] .version {
   fill: var(--road-shadow);
   transform-box: fill-box;
   transform-origin: 50% 50%;
-  animation: shadow-step 0.62s ease-in-out infinite;
+  animation: shadow-step var(--step) ease-in-out infinite;
 }
 @keyframes shadow-step {
   0%, 50%, 100% { transform: scaleX(1); opacity: 1; }
@@ -510,10 +516,10 @@ body[data-screen="gm"] .version {
   transform-box: fill-box;
   transform-origin: 50% 0;   /* pivot at the shoulder, not the middle */
 }
-.raccoon-foot--l { animation: step-front 0.62s ease-in-out infinite; }
-.raccoon-foot--r { animation: step-back 0.62s ease-in-out infinite; }
-.raccoon-arm--l { animation: swing-left 0.62s ease-in-out infinite; }
-.raccoon-arm--r { animation: swing-right 0.62s ease-in-out infinite; }
+.raccoon-foot--l { animation: step-front var(--step) ease-in-out infinite; }
+.raccoon-foot--r { animation: step-back var(--step) ease-in-out infinite; }
+.raccoon-arm--l { animation: swing-left var(--step) ease-in-out infinite; }
+.raccoon-arm--r { animation: swing-right var(--step) ease-in-out infinite; }
 
 /* Mostly a lift: a wider stride would swing the feet across each other
    into a single blob, since they sit only 32px apart. */
@@ -538,11 +544,94 @@ body[data-screen="gm"] .version {
 .raccoon-tail {
   transform-box: fill-box;
   transform-origin: 8% 92%;   /* where it meets the body */
-  animation: tail-sway 1.24s ease-in-out infinite;
+  animation: tail-sway calc(var(--step) * 2) ease-in-out infinite;
 }
 @keyframes tail-sway {
   0%, 100% { transform: rotate(-5deg); }
   50% { transform: rotate(6deg); }
+}
+
+/* ── Gaits ────────────────────────────────────────────────────────────
+   app.js sets data-gait on .scene from the number of open quests. Each
+   gait swaps in its own keyframes rather than just replaying the walk
+   faster, so standing, walking and running read as different motions. */
+
+/* Rest: nothing is open, so he stops and just breathes. The road and the
+   bushes hold still with him instead of sliding past a standing raccoon. */
+.scene[data-gait="rest"] .road__dashes,
+.scene[data-gait="rest"] .scene__bushes { animation-play-state: paused; }
+
+.scene[data-gait="rest"] .raccoon-walker {
+  animation: raccoon-breathe 3.4s ease-in-out infinite;
+}
+@keyframes raccoon-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1.5px) scaleY(1.02); }
+}
+
+/* Dropping the animation lets the feet and arms fall back to the rest
+   pose from their SVG transform attributes. */
+.scene[data-gait="rest"] .raccoon-foot,
+.scene[data-gait="rest"] .raccoon-arm,
+.scene[data-gait="rest"] .raccoon-shadow { animation: none; }
+
+.scene[data-gait="rest"] .raccoon-tail {
+  animation: tail-sway 4.6s ease-in-out infinite;
+}
+
+/* Run: leans into it, bounces higher, knees up, arms pumping and the tail
+   streaming out behind. */
+.scene[data-gait="run"] .raccoon-walker {
+  animation-name: raccoon-run;
+}
+@keyframes raccoon-run {
+  0%, 100% { transform: translateY(-2px) rotate(-5deg); }
+  25% { transform: translateY(-11px) rotate(-7deg); }
+  50% { transform: translateY(-2px) rotate(-5deg); }
+  75% { transform: translateY(-11px) rotate(-3deg); }
+}
+
+.scene[data-gait="run"] .raccoon-foot--l { animation-name: run-front; }
+.scene[data-gait="run"] .raccoon-foot--r { animation-name: run-back; }
+/* The two feet run the same cycle half a period apart, so a plain there-and-back
+   would put them in the same spot twice per stride. The extra key at the swing
+   peak lifts one foot clear while the other is planted, keeping them apart. */
+@keyframes run-front {
+  0%, 100% { transform: translate(-12px, 0) rotate(-22deg); }
+  40% { transform: translate(6px, -4px) rotate(12deg); }
+  70% { transform: translate(-4px, -17px) rotate(-8deg); }
+}
+@keyframes run-back {
+  0%, 100% { transform: translate(8px, -4px) rotate(12deg); }
+  20% { transform: translate(0, -17px) rotate(-8deg); }
+  50% { transform: translate(0, 0) rotate(-16deg); }
+  75% { transform: translate(6px, -2px) rotate(4deg); }
+}
+
+.scene[data-gait="run"] .raccoon-arm--l { animation-name: pump-left; }
+.scene[data-gait="run"] .raccoon-arm--r { animation-name: pump-right; }
+/* Nudged outwards as well as swung: the arms sit inside the body's outline, so
+   a pure rotation would pump them behind the belly where nothing shows. */
+@keyframes pump-left  {
+  0%, 100% { transform: translateX(-6px) rotate(-52deg); }
+  50% { transform: translateX(-2px) rotate(4deg); }
+}
+@keyframes pump-right {
+  0%, 100% { transform: translateX(2px) rotate(-4deg); }
+  50% { transform: translateX(6px) rotate(52deg); }
+}
+
+/* Barely sways at speed — it is held out straight for balance. */
+.scene[data-gait="run"] .raccoon-tail { animation-name: tail-stream; }
+@keyframes tail-stream {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(-5deg); }
+}
+
+.scene[data-gait="run"] .raccoon-shadow { animation-name: shadow-run; }
+@keyframes shadow-run {
+  0%, 50%, 100% { transform: scaleX(1); opacity: 0.95; }
+  25%, 75% { transform: scaleX(0.74); opacity: 0.6; }
 }
 .raccoon-mood {
   position: absolute;

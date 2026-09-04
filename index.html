@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.9.0">
+<link rel="stylesheet" href="styles.css?v=1.10.0">
 </head>
 <body>
 
@@ -131,8 +131,9 @@
       <!-- Confirmed quests wait here as chests until the player opens them. -->
       <div class="chest-tray" id="chestTray" hidden></div>
 
-      <!-- The scene scrolls to the right, so the raccoon reads as walking left. -->
-      <div class="scene">
+      <!-- The scene scrolls to the right, so the raccoon reads as moving left.
+           app.js sets data-gait and the step speed from the open quest count. -->
+      <div class="scene" id="scene" data-gait="rest">
         <div class="scene__bushes" aria-hidden="true"></div>
 
         <div class="raccoon-container">
@@ -391,6 +392,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.9.0"></script>
+<script src="app.js?v=1.10.0"></script>
 </body>
 </html>

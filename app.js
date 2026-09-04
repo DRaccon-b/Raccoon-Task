@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -458,6 +458,37 @@ function renderRaccoon() {
 
   $('raccoonMood').textContent = mood;
   $('raccoonStatus').textContent = status;
+  renderGait(active);
+}
+
+/* Only active quests set the pace: one waiting on her confirmation is off his
+   plate, and a chest is a reward rather than a chore. */
+function gaitFor(active) {
+  if (active === 0) return { gait: 'rest', step: 0 };
+  if (active <= 2) return { gait: 'walk', step: active === 1 ? 0.74 : 0.64 };
+  // From three onwards he runs, tightening by 0.03s per quest down to a floor
+  // where the legs would otherwise blur into each other.
+  return { gait: 'run', step: Math.max(0.26, 0.44 - (active - 3) * 0.03) };
+}
+
+function renderGait(active) {
+  const scene = $('scene');
+  if (!scene) return;
+  const { gait, step } = gaitFor(active);
+  scene.dataset.gait = gait;
+
+  if (gait === 'rest') {
+    // Let the stylesheet's own resting timings stand.
+    scene.style.removeProperty('--step');
+    scene.style.removeProperty('--road-speed');
+    scene.style.removeProperty('--bush-speed');
+    return;
+  }
+
+  // The ground has to keep pace with the legs, or he moonwalks.
+  scene.style.setProperty('--step', `${step}s`);
+  scene.style.setProperty('--road-speed', `${(step * 1.9).toFixed(3)}s`);
+  scene.style.setProperty('--bush-speed', `${(step * 15).toFixed(2)}s`);
 }
 
 /* --- Chest artwork --------------------------------------------------------
