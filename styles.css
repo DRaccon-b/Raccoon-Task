@@ -184,7 +184,12 @@ body {
   color: var(--ink);
   max-width: 430px;
   margin: 0 auto;
-  min-height: 100dvh;
+  /* A definite height, not just a floor. With min-height alone Safari does
+     not reliably stretch the flex chain below it on the first layout, which
+     left the tab bar hanging short of the bottom until something forced a
+     reflow. Everything tall scrolls inside its own panel anyway. */
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
@@ -252,6 +257,7 @@ body[data-screen="gm"] .version {
 .role-select {
   align-items: center;
   justify-content: center;
+  overflow-y: auto;   /* still reachable on a very short screen */
   padding: calc(var(--safe-top) + 32px) 24px calc(var(--safe-bottom) + 32px);
   text-align: center;
   gap: 40px;
@@ -1308,7 +1314,14 @@ body[data-screen="gm"] .version {
 }
 
 /* --- Views --------------------------------------------------------------- */
-.view { display: none; flex: 1; flex-direction: column; overflow-y: auto; overscroll-behavior-y: contain; }
+.view {
+  display: none;
+  flex: 1;
+  min-height: 0;   /* without this it grows past the screen instead of scrolling */
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
 .view.is-active { display: flex; }
 
 .panel {
@@ -1747,6 +1760,7 @@ body[data-screen="gm"] .version {
 
 .gm-body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
