@@ -1,0 +1,12 @@
+{
+  "name": "Raccoon Quest",
+  "short_name": "Raccoon",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF8F3",
+  "theme_color": "#FBF8F3",
+  "icons": [
+    { "src": "./icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -18,7 +18,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.14.0">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=1.15.0">
 </head>
 <body>
 
@@ -122,6 +123,7 @@
       </div>
     </div>
 
+    <button class="icon-btn" id="pushBtnPlayer" data-action="toggle-push" title="Mitteilungen" aria-label="Mitteilungen">🔕</button>
     <button class="icon-btn" data-action="switch-role" title="Rolle wechseln" aria-label="Rolle wechseln">↺</button>
   </header>
 
@@ -435,6 +437,7 @@
   <header class="gm-header">
     <div class="gm-header__top">
       <h1 class="gm-header__title">👑 <em>Quest</em>Book</h1>
+      <button class="icon-btn" id="pushBtnGm" data-action="toggle-push" title="Mitteilungen" aria-label="Mitteilungen">🔕</button>
       <button class="icon-btn" data-action="switch-role" title="Rolle wechseln" aria-label="Rolle wechseln">↺</button>
     </div>
     <div class="stat-row">
@@ -584,6 +587,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.14.0"></script>
+<script src="app.js?v=1.15.0"></script>
 </body>
 </html>

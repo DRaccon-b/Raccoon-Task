@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -494,6 +494,154 @@ function renderGait(active) {
   scene.style.setProperty('--hill-speed', `${(step * 34).toFixed(2)}s`);
   scene.style.setProperty('--mtn-speed', `${(step * 95).toFixed(2)}s`);
   scene.style.setProperty('--sky-speed', `${(step * 152).toFixed(2)}s`);
+}
+
+/* --- Push notifications ---------------------------------------------------
+   The phone subscribes to its push service and parks the subscription in
+   push_subs under the role it is being used as. Sending happens in the
+   notify edge function, which is the only place the signing key exists.
+
+   On iOS this only works once the app has been added to the home screen —
+   Safari refuses the permission prompt in a normal tab — so the button says
+   so rather than failing silently. */
+const VAPID_PUBLIC = 'BAeuc3EvRv2fap1TmQWZ0sp9rspVw_kL9-zuCCIMgK6ebQYC9KtIXZHfcDi90JZz527PU9PIeu-Zh9RQ9PsaJAs';
+
+const pushSupported = () =>
+  'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+const isInstalled = () =>
+  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+/** base64url from the server → the Uint8Array the browser wants. */
+function decodeKey(base64url) {
+  const padded = base64url.replace(/-/g, '+').replace(/_/g, '/')
+    .padEnd(Math.ceil(base64url.length / 4) * 4, '=');
+  return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
+}
+
+let swRegistration = null;
+
+async function registerWorker() {
+  if (!pushSupported()) return null;
+  if (swRegistration) return swRegistration;
+  try {
+    swRegistration = await navigator.serviceWorker.register('sw.js');
+    return swRegistration;
+  } catch (err) {
+    console.error('Service Worker nicht registriert', err);
+    return null;
+  }
+}
+
+async function currentSubscription() {
+  const reg = await registerWorker();
+  return reg ? reg.pushManager.getSubscription() : null;
+}
+
+/** Everything the button needs to know, in one word. */
+async function pushState() {
+  if (!pushSupported()) return 'unsupported';
+  if (!isInstalled() && isApple()) return 'needs-install';
+  if (Notification.permission === 'denied') return 'denied';
+  return (await currentSubscription()) ? 'on' : 'off';
+}
+
+const isApple = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+async function renderPushButton() {
+  const state_ = await pushState();
+  const look = {
+    on: { icon: '🔔', title: 'Mitteilungen sind an' },
+    off: { icon: '🔕', title: 'Mitteilungen einschalten' },
+    denied: { icon: '🔕', title: 'In den iPhone-Einstellungen erlaubt?' },
+    'needs-install': { icon: '🔕', title: 'Erst zum Home-Bildschirm hinzufügen' },
+    unsupported: { icon: '🔕', title: 'Dieses Gerät kann keine Mitteilungen' },
+  }[state_];
+
+  ['pushBtnPlayer', 'pushBtnGm'].forEach((id) => {
+    const button = $(id);
+    if (!button) return;
+    button.textContent = look.icon;
+    button.title = look.title;
+    button.classList.toggle('icon-btn--on', state_ === 'on');
+  });
+}
+
+async function togglePush() {
+  const state_ = await pushState();
+
+  if (state_ === 'unsupported') {
+    showToast('Dieses Gerät unterstützt keine Mitteilungen', 'error');
+    return;
+  }
+  if (state_ === 'needs-install') {
+    showToast('Teilen → „Zum Home-Bildschirm", dann hier nochmal tippen', 'info');
+    return;
+  }
+  if (state_ === 'denied') {
+    showToast('Mitteilungen sind gesperrt — in den iPhone-Einstellungen erlauben', 'error');
+    return;
+  }
+
+  if (state_ === 'on') {
+    const sub = await currentSubscription();
+    if (sub) {
+      await sb?.from('push_subs').delete().eq('endpoint', sub.endpoint);
+      await sub.unsubscribe();
+    }
+    showToast('Mitteilungen aus', 'info');
+    renderPushButton();
+    return;
+  }
+
+  // Safari only grants this straight out of a tap, so it has to be the
+  // first thing that happens here.
+  const granted = await Notification.requestPermission();
+  if (granted !== 'granted') {
+    showToast('Mitteilungen wurden nicht erlaubt', 'error');
+    renderPushButton();
+    return;
+  }
+
+  const reg = await registerWorker();
+  if (!reg) { showToast('Mitteilungen konnten nicht eingerichtet werden', 'error'); return; }
+
+  try {
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: decodeKey(VAPID_PUBLIC),
+    });
+    await saveSubscription(sub);
+    showToast('Mitteilungen sind an!', 'success');
+    notify('test', '', state.role);
+  } catch (err) {
+    reportError(err, 'Mitteilungen konnten nicht eingerichtet werden');
+  }
+  renderPushButton();
+}
+
+async function saveSubscription(sub) {
+  if (!sb || !sub) return;
+  const keys = sub.toJSON().keys ?? {};
+  await sb.from('push_subs').upsert({
+    role: state.role === 'gm' ? 'gm' : 'player',
+    endpoint: sub.endpoint,
+    p256dh: keys.p256dh,
+    auth: keys.auth,
+    last_seen_at: new Date().toISOString(),
+  }, { onConflict: 'endpoint' });
+}
+
+/**
+ * Ask the server to push the other side. Deliberately unawaited by its
+ * callers and silent on failure: a quest that saved fine must not look
+ * broken because a notification did not go out.
+ */
+function notify(event, name = '', to) {
+  if (!sb) return;
+  sb.functions.invoke('notify', { body: { event, name, to } })
+    .catch((err) => console.error('Mitteilung nicht verschickt', err));
 }
 
 /* --- Season ---------------------------------------------------------------
@@ -1032,6 +1180,13 @@ function setRole(role) {
   // is the one screen a role switch should never leave hidden behind
   // whatever tab was open last.
   if (role === 'player') setPlayerView('viewRaccoon');
+
+  // This phone is now the other person, so its subscription has to change
+  // sides too — otherwise it keeps getting the notifications meant for the
+  // role it was last used as.
+  renderPushButton();
+  currentSubscription().then((sub) => sub && saveSubscription(sub));
+
   renderAll();
 }
 
@@ -1134,6 +1289,9 @@ async function saveQuest(form) {
     reportError(error, editingId ? 'Quest konnte nicht gespeichert werden' : 'Quest konnte nicht erstellt werden');
     return;
   }
+
+  // Only a brand new quest is news; editing one he has already seen is not.
+  if (!editingId) notify('quest_created', name);
 
   form.reset();
   state.editingQuestId = null;
@@ -1247,6 +1405,7 @@ async function submitQuest(id) {
     .eq('id', id).eq('status', 'active');
 
   if (error) { reportError(error, 'Quest konnte nicht eingereicht werden'); return; }
+  notify('quest_submitted', state.quests.find((q) => q.id === id)?.name);
   showToast('Eingereicht! Warte auf Bestätigung.', 'info');
 }
 
@@ -1292,6 +1451,7 @@ async function confirmQuest(id) {
   });
 
   if (chestError) { reportError(chestError, 'Truhe konnte nicht erstellt werden'); return; }
+  notify('quest_confirmed', quest.name);
   showToast('Bestätigt! Eine Truhe wartet auf dem Hauptbildschirm.', 'success');
 }
 
@@ -1371,6 +1531,7 @@ async function denyQuest(id) {
   if (!requireDb()) return;
   const { error } = await sb.from('quests').update({ status: 'active' }).eq('id', id);
   if (error) { reportError(error, 'Quest konnte nicht zurückgewiesen werden'); return; }
+  notify('quest_denied', state.quests.find((q) => q.id === id)?.name);
   showToast('Zurückgewiesen', 'info');
 }
 
@@ -1465,6 +1626,7 @@ async function buyItem(id) {
     token_spent: item.price,
   });
 
+  notify('item_bought', item.name);
   showToast(`${item.name} eingelöst!`, 'success');
 }
 
@@ -1478,6 +1640,7 @@ function showLevelUp(level) {
 const actions = {
   'pick-role': (el) => setRole(el.dataset.role),
   'switch-role': () => clearRole(),
+  'toggle-push': () => togglePush(),
   'player-tab': (el) => setPlayerView(el.dataset.view),
   'gm-tab': (el) => setGmTab(el.dataset.tab),
   'open-create': () => {
@@ -1623,6 +1786,7 @@ function start() {
   // Set before anything else paints, so the backdrop never flashes the wrong
   // season on the way in.
   renderSeason();
+  registerWorker().then(renderPushButton);
 
   let savedRole = null;
   try { savedRole = localStorage.getItem(ROLE_KEY); } catch { /* private mode */ }

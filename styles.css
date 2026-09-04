@@ -399,6 +399,11 @@ body[data-screen="gm"] .version {
   transition: transform 0.15s;
 }
 .icon-btn:active { transform: scale(0.9); }
+/* The bell only looks switched on once notifications actually are. */
+.icon-btn--on {
+  background: var(--mint-soft);
+  border-color: var(--mint);
+}
 
 /* --- Raccoon stage ------------------------------------------------------- */
 .raccoon-stage {
