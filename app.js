@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.14.0';
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -508,9 +508,72 @@ function seasonFor(date = new Date()) {
   return SEASONS[Math.floor(((date.getMonth() + 1) % 12) / 3)];
 }
 
+/* A handful of drops per season, few enough to stay scenery. Ranges are
+   [from, to]; every drop picks its own values inside them. */
+const WEATHER = {
+  spring: { kind: 'petal', count: 6, size: [9, 15], fall: [17, 27], sway: [3.6, 5.6],
+            swayX: '11px', swayR: '24deg', fade: 0.8,
+            // pure white would all but vanish against the sky
+            tints: ['var(--sea-bloom)', '#F9CBDD', 'var(--sea-bloom2)'] },
+  summer: { kind: 'leaf', count: 4, size: [11, 17], fall: [15, 23], sway: [3.2, 5],
+            swayX: '13px', swayR: '40deg', fade: 0.7,
+            tints: ['var(--sea-leaf)', 'var(--sea-leaf-light)'] },
+  autumn: { kind: 'leaf', count: 5, size: [12, 20], fall: [15, 24], sway: [3.4, 5.2],
+            swayX: '9px', swayR: '38deg', fade: 0.85,
+            tints: ['var(--sea-leaf)', 'var(--sea-leaf-light)', 'var(--sea-bush)'] },
+  winter: { kind: 'flake', count: 9, size: [7, 14], fall: [20, 32], sway: [4.5, 7],
+            swayX: '8px', swayR: '14deg', fade: 0.9,
+            tints: ['#FFFFFF', '#E8F3FF'] },
+};
+
+/* Steps of the golden ratio never repeat and never clump, so the drops end up
+   scattered rather than in a grid — and identically on every phone, which a
+   random number would not be. */
+const SPREAD = 0.6180339887;
+const scatter = (seed, i) => (seed + i * SPREAD) % 1;
+const between = ([from, to], t) => from + (to - from) * t;
+
+let weatherSeason = null;
+
+function buildWeather(season) {
+  const layer = $('weather');
+  const spec = WEATHER[season];
+  if (!layer || !spec) return;
+
+  const drops = [];
+  for (let i = 0; i < spec.count; i++) {
+    const fall = between(spec.fall, scatter(0.71, i));
+    const style = {
+      '--x': `${(4 + scatter(0.13, i) * 90).toFixed(1)}%`,
+      '--size': `${between(spec.size, scatter(0.37, i)).toFixed(1)}px`,
+      '--fall': `${fall.toFixed(2)}s`,
+      '--sway': `${between(spec.sway, scatter(0.29, i)).toFixed(2)}s`,
+      '--sway-x': spec.swayX,
+      '--sway-r': spec.swayR,
+      '--fade': spec.fade,
+      '--tint': spec.tints[i % spec.tints.length],
+      // a head start each, so they are already spread out when the page opens
+      '--delay': `${(-scatter(0.53, i) * fall).toFixed(2)}s`,
+    };
+    const drop = document.createElement('span');
+    drop.className = 'drop';
+    drop.dataset.kind = spec.kind;
+    Object.entries(style).forEach(([prop, value]) => drop.style.setProperty(prop, value));
+    drops.push(drop);
+  }
+  layer.replaceChildren(...drops);
+}
+
 function renderSeason() {
   const scene = $('scene');
-  if (scene) scene.dataset.season = seasonFor();
+  if (!scene) return;
+  const season = seasonFor();
+  scene.dataset.season = season;
+  // Only on a real change: rebuilding would restart every fall mid-air.
+  if (season !== weatherSeason) {
+    weatherSeason = season;
+    buildWeather(season);
+  }
 }
 
 /* --- Chest artwork --------------------------------------------------------

@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <!-- The ?v= must match APP_VERSION in app.js: it busts the CDN cache so a
      deploy cannot leave an old stylesheet or script behind. -->
-<link rel="stylesheet" href="styles.css?v=1.13.0">
+<link rel="stylesheet" href="styles.css?v=1.14.0">
 </head>
 <body>
 
@@ -322,16 +322,9 @@
 
         </svg>
 
-        <!-- Weather. Five leaves is enough to read as autumn without turning
-             into confetti; the long, uneven cycles and the negative delays
-             keep them from ever falling in step. -->
-        <div class="weather" aria-hidden="true">
-          <span class="drop drop--leaf" style="--x: 8%;  --fall: 15s; --sway: 3.4s; --delay: -2s;  --size: 17px; --tint: var(--sea-leaf)"></span>
-          <span class="drop drop--leaf" style="--x: 27%; --fall: 21s; --sway: 4.6s; --delay: -9s;  --size: 12px; --tint: var(--sea-leaf-light)"></span>
-          <span class="drop drop--leaf" style="--x: 51%; --fall: 17s; --sway: 3.9s; --delay: -14s; --size: 20px; --tint: var(--sea-bush)"></span>
-          <span class="drop drop--leaf" style="--x: 73%; --fall: 24s; --sway: 5.2s; --delay: -5s;  --size: 14px; --tint: var(--sea-leaf)"></span>
-          <span class="drop drop--leaf" style="--x: 90%; --fall: 19s; --sway: 4.1s; --delay: -17s; --size: 16px; --tint: var(--sea-leaf-light)"></span>
-        </div>
+        <!-- Weather. app.js fills this with a handful of drops to suit the
+             season: petals, leaves or snowflakes. -->
+        <div class="weather" id="weather" aria-hidden="true"></div>
 
         <div class="scene__dusk" aria-hidden="true"></div>
 
@@ -591,6 +584,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1.13.0"></script>
+<script src="app.js?v=1.14.0"></script>
 </body>
 </html>

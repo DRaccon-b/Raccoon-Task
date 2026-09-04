@@ -453,17 +453,16 @@ body[data-screen="gm"] .version {
 }
 
 /* --- Weather --------------------------------------------------------------
-   A drop is a full-height column with its leaf parked at the top. Sliding
-   that column down by its own height therefore carries the leaf exactly one
-   scene height, whatever the phone, and the sway rides along inside it. */
+   A drop is a full-height column with its flake or leaf parked at the top.
+   Sliding that column down by its own height therefore carries the drop
+   exactly one scene height, whatever the phone, and the sway rides along
+   inside it. app.js sets the per-drop variables. */
 .weather {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
 }
-.drop { display: none; }
-.scene[data-season="autumn"] .drop--leaf { display: block; }
 
 .drop {
   position: absolute;
@@ -478,7 +477,7 @@ body[data-screen="gm"] .version {
   to { transform: translateY(100%); }
 }
 
-/* The leaf itself only turns and drifts sideways; falling is the column's
+/* The drop itself only turns and drifts sideways; falling is the column's
    job, so the two never fight over the same transform. */
 .drop::before {
   content: '';
@@ -486,15 +485,29 @@ body[data-screen="gm"] .version {
   width: var(--size);
   height: var(--size);
   background: var(--tint);
-  opacity: 0.85;
-  /* A leaf: pointed at the tip and the stem, rounded along the sides. Corner
-     radii scale with the element, which path() would not. */
-  border-radius: 58% 4% 58% 4%;
+  opacity: var(--fade);
   animation: drop-sway var(--sway) ease-in-out var(--delay) infinite alternate;
 }
 @keyframes drop-sway {
-  from { transform: translateX(-9px) rotate(-40deg); }
-  to { transform: translateX(9px) rotate(35deg); }
+  from { transform: translateX(calc(var(--sway-x) * -1)) rotate(calc(var(--sway-r) * -1)); }
+  to { transform: translateX(var(--sway-x)) rotate(var(--sway-r)); }
+}
+
+/* Corner radii scale with the element, which a clip path would not. A leaf is
+   pointed at the tip and the stem; a petal only at the stem. */
+.drop[data-kind="leaf"]::before { border-radius: 58% 4% 58% 4%; }
+/* Narrower than it is tall, or a petal just reads as a blob. */
+.drop[data-kind="petal"]::before {
+  width: calc(var(--size) * 0.68);
+  border-radius: 50% 50% 50% 8%;
+}
+
+/* The one shape too fiddly for border radii, so it is masked instead: three
+   crossed spokes with a pair of barbs on each arm. */
+.drop[data-kind="flake"]::before {
+  -webkit-mask: var(--flake) center / contain no-repeat;
+  mask: var(--flake) center / contain no-repeat;
+  --flake: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke="black" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M12 1.6V22.4M3 6.8 21 17.2M3 17.2 21 6.8"/><path d="M12 6.6 8.8 3.8M12 6.6 15.2 3.8M12 17.4 8.8 20.2M12 17.4 15.2 20.2"/><path d="M7.2 9.4 3.4 9.6M16.8 14.6 20.6 14.4M16.8 9.4 20.6 9.6M7.2 14.6 3.4 14.4"/></g></svg>');
 }
 
 /* Lays a dusk tint over sky, clouds and scenery in one go. It sits between
