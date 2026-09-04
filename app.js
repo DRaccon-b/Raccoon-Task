@@ -11,7 +11,19 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.17.5-debug';
+const APP_VERSION = '1.18.0';
+
+/*
+ * On the home screen, iOS usually freezes the app instead of closing it when
+ * you switch away — reopening it just resumes the frozen page rather than
+ * loading it fresh, so a new deploy never arrives no matter how often the
+ * app is quit and reopened. "pageshow" with persisted=true is the signal
+ * that a frozen page is being resumed rather than freshly loaded, so that
+ * case forces a real reload instead of trusting what is still in memory.
+ */
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) location.reload();
+});
 
 const SUPABASE_URL = 'https://acyyszsjixqbzucssfud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeXlzenNqaXhxYnp1Y3NzZnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAzMjcsImV4cCI6MjEwNDAyNjMyN30.HIn7-kJX_Hh0l71kbiGiYrgOEUnoGSXk8mNt1ZMj59Q';
@@ -1340,6 +1352,21 @@ function renderHistory() {
 
 /* --- Navigation ---------------------------------------------------------- */
 
+/*
+ * Outside the actual page — the strip of native screen below what iOS hands
+ * over as the viewport, and any rubber-band overscroll above it — the
+ * browser paints with the <html> background colour, not anything in the
+ * DOM. A fixed-position footer can never reach that strip, so the colour
+ * has to be set here instead: white while the player screen (whose header
+ * and tab bar are both white) is up front, parchment everywhere else,
+ * matching the GM screen's parchment-coloured body beneath its panels.
+ */
+function setScreen(screen) {
+  document.body.dataset.screen = screen;
+  document.documentElement.style.background =
+    screen === 'player' ? 'var(--surface)' : 'var(--parchment)';
+}
+
 function setRole(role) {
   state.role = role;
   try { localStorage.setItem(ROLE_KEY, role); } catch { /* private mode */ }
@@ -1348,7 +1375,7 @@ function setRole(role) {
   $('screenPlayer').hidden = role !== 'player';
   $('screenGm').hidden = role !== 'gm';
   // Lets the version marker dodge the bottom bar / action button.
-  document.body.dataset.screen = role;
+  setScreen(role);
 
   // Always open the QuestBook on the quest list — that is where pending
   // confirmations show up, and they are the reason to open it at all.
@@ -1374,7 +1401,7 @@ function clearRole() {
   $('screenPlayer').hidden = true;
   $('screenGm').hidden = true;
   $('screenRole').hidden = false;
-  document.body.dataset.screen = 'role';
+  setScreen('role');
 }
 
 function setPlayerView(viewId) {
@@ -1950,7 +1977,7 @@ $('itemStock').addEventListener('input', renderPeriodPicker);
 
 function start() {
   $('version').textContent = `v${APP_VERSION}`;
-  document.body.dataset.screen = 'role';
+  setScreen('role');
   pickTier(DEFAULT_CATEGORY, { prefillRewards: true });
 
   if (window.supabase?.createClient) {
