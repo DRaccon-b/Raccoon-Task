@@ -793,7 +793,11 @@ body[data-screen="gm"] .version {
   -webkit-user-select: none;
   touch-action: manipulation;
 }
-.raccoon-svg { width: 100%; height: 100%; display: block; }
+/* An SVG clips to its own viewBox by default. The animals lean and stretch
+   past theirs while running — the bear's and the dino's snouts by a good
+   15px, the shark's nose and tail in every gait — so let them draw outside
+   it. The scene's own overflow:hidden still keeps them inside the stage. */
+.raccoon-svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
 /* --- Wardrobe --------------------------------------------------------------
    Skin picker: the same tier-picker card layout, but the icon is a plain

@@ -11,7 +11,7 @@
  * tags in index.html to match — that pair is what forces phones to drop
  * the cached copies instead of quietly running the old build.
  */
-const APP_VERSION = '1.20.0';
+const APP_VERSION = '1.20.1';
 
 /*
  * On the home screen, iOS usually freezes the app instead of closing it when
